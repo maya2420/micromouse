@@ -7,7 +7,7 @@ AccelStepper mystepperRight(1,8,7);
 bool stuck = true;   //We will use this to signal when all IR sensors detect a dead-end
 
 void goStraight(void);
-void goStraight_short(void);
+void go_short(void);
 int SR = 0, FR = 0, FL = 0, SL = 0;
 
  //void turnRight(){
@@ -23,12 +23,12 @@ int SR = 0, FR = 0, FL = 0, SL = 0;
 
 void setup() {
   // put your setup code here, to run once:
-  mystepperLeft.setMaxSpeed(2000.0);           
-  mystepperLeft.setAcceleration(750);          //getting up to setMax speed
+  mystepperLeft.setMaxSpeed(8000.0);           
+  mystepperLeft.setAcceleration(6000);          //getting up to setMax speed
   mystepperLeft.setCurrentPosition(0);
 
-  mystepperRight.setMaxSpeed(2000.0);
-  mystepperRight.setAcceleration(750);
+  mystepperRight.setMaxSpeed(8000.0);
+  mystepperRight.setAcceleration(6000);
   mystepperRight.setCurrentPosition(0);
    
   pinMode(9,OUTPUT);                        //this pin is M1, used to configure modes for fractional steps
@@ -50,13 +50,13 @@ void loop() {
  FL = analogRead(A2);
  SL = analogRead(A3);
 
-  if(FR > 850 || FL > 850){
+  if(FR > 950 || FL > 950){
     goStraight();
   }
-  else if(SR > 850){
+  else if(SR > 950){
     turnRight();
   }
-  else if(SL > 850){
+  else if(SL > 950){
     turnLeft();
   }
   
@@ -74,47 +74,54 @@ void loop() {
 
 void turnLeft(void) {
   mystepperRight.setCurrentPosition(0);
-  mystepperRight.moveTo(632);
+  mystepperRight.moveTo(480);
   mystepperRight.runToPosition();
   go_short();
  }
 void turnRight(void) {
   mystepperLeft.setCurrentPosition(0);
-  mystepperLeft.moveTo(632);                
+  mystepperLeft.moveTo(480);                
   mystepperLeft.runToPosition();
   go_short();
  }
 
 void go_short()
-  {
+{
     mystepperLeft.setCurrentPosition(0);
     mystepperRight.setCurrentPosition(0);
 
-    mystepperLeft.moveTo(552);
-    mystepperRight.moveTo(552);
+    mystepperLeft.moveTo(424);
+    mystepperRight.moveTo(424);
 
-    while ((mystepperLeft.currentPosition() < 552) || mystepperRight.currentPosition() < 552) {
-
-      mystepperLeft.run();
-      mystepperRight.run();
+  while ((mystepperLeft.currentPosition() < 424) || mystepperRight.currentPosition() < 424) {
+  
+  
+  mystepperLeft.run();
+  mystepperRight.run();
     
 
-    }
-  }
+}
+}
 
  void goStraight(void) {
 
     mystepperLeft.setCurrentPosition(0);
     mystepperRight.setCurrentPosition(0);
 
-    mystepperLeft.moveTo(882);
-    mystepperRight.moveTo(882);
+    mystepperLeft.moveTo(764);
+    mystepperRight.moveTo(764);
 
-    while ((mystepperLeft.currentPosition() < 882) || mystepperRight.currentPosition() < 882) {
-
+    while ((mystepperLeft.currentPosition() < 764) || mystepperRight.currentPosition() < 764) {
+    /*if(mystepperLeft.currentPosition() == 441 || mystepperRight.currentPosition() == 441)
+    {
+      if(FR > 900 || FL > 900){
+        
+      mystepperLeft.setCurrentPosition(0);
+      mystepperRight.setCurrentPosition(0);
+    }*/
+    
       mystepperLeft.run();
       mystepperRight.run();
-    
 
     }
-  }
+ } 
