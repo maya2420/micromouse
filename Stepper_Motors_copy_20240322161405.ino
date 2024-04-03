@@ -60,16 +60,17 @@ void loop() {
     turnLeft();
   }
   
-  /*while(stuck){
-  
+  while(stuck){
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
   mystepperRight.moveTo(-632);
-  .moveTo(632);
+  mystepperLeft.moveTo(632);
   mystepperRight.run();
-  .run();
-  
+  mystepperLeft.run();
+  goStraight();
   }
-  delay(1500);
- */ 
+  delay(500);
+ 
 }
 
 void turnLeft(void) {
