@@ -1,0 +1,109 @@
+#include <AccelStepper.h>
+//const int stepsPerRev= 200;
+AccelStepper mystepperLeft(1, 5, 4);
+AccelStepper mystepperRight(1, 8, 7);
+
+bool stuck = true;  //We will use this to signal when all IR sensors detect a dead-end
+
+void goStraight(void);
+void go_short(void);
+int SR = 0, FR = 0, FL = 0, SL = 0;
+
+//void turnRight(){
+// mystepperRight.setCurrentPosition(0);
+// mystepperRight.moveTo(632);
+// mystepperRight.runToPosition();
+
+void turnLeft(void);
+void turnLeft(void);
+
+//Adjustments can made via small tail-fin manuever,
+//by individualy changing single motor accell or speed
+
+void setup() {
+  // put your setup code here, to run once:
+  mystepperLeft.setMaxSpeed(1000);
+  mystepperLeft.setAcceleration(4000);  //getting up to setMax speed
+  mystepperLeft.setCurrentPosition(0);
+
+
+  mystepperRight.setMaxSpeed(1000);
+  mystepperRight.setAcceleration(4000);
+  mystepperRight.setCurrentPosition(0);
+
+  pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
+  pinMode(10, OUTPUT);    //this pin is M2, used to configure modes for fractional steps
+  digitalWrite(9, HIGH);  //We use this to make half-steps
+  digitalWrite(10, LOW);  //Must be turned off to make half-steps
+
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  SR = analogRead(A0);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
+
+  if (FR > 950 || FL > 950) {
+    goStraight();
+  } else if (SR > 950) {
+    turnRight();
+  } else if (SL > 950) {
+    turnLeft();
+  }
+}
+
+void turnLeft(void) {
+
+  mystepperRight.move(480);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    mystepperRight.run();
+  }
+}
+
+
+void turnRight(void) {
+  
+
+  mystepperLeft.move(480);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+  }
+}
+
+
+
+void goStraight(void) {
+
+  mystepperLeft.move(12224);
+  mystepperRight.move(12224);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    // Run the stepper motors towards their set positions
+    mystepperLeft.run();
+    mystepperRight.run();
+    SR = analogRead(A0);
+    FR = analogRead(A1);
+    FL = analogRead(A2);
+    SL = analogRead(A3);
+
+
+    if ((FR < 950 || FL < 950) && (SR > 950 || SL > 950)) {
+      mystepperLeft.move(180);
+      mystepperRight.move(180);
+      while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+        // Run the stepper motors towards their set positions
+        mystepperLeft.run();
+        mystepperRight.run();
+      }
+      break;
+    }
+  }
+}
