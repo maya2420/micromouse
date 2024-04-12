@@ -50,27 +50,27 @@ void loop() {
  FL = analogRead(A2);
  SL = analogRead(A3);
 
-  if(FR > 950 || FL > 950){
+if (FR > 950 || FL > 950) {
     goStraight();
-  }
-  else if(SR > 950){
+  } else if (SR > 950) {
     turnRight();
-  }
-  else if(SL > 950){
+  } else if (SL > 950) {
     turnLeft();
-  }
-  
-  while(stuck){
-  mystepperRight.setCurrentPosition(0);
-  mystepperLeft.setCurrentPosition(0);
-  mystepperRight.moveTo(-632);
-  mystepperLeft.moveTo(632);
-  mystepperRight.run();
-  mystepperLeft.run();
-  goStraight();
-  }
-  delay(500);
- 
+  } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
+    mystepperRight.setCurrentPosition(0);
+    mystepperLeft.setCurrentPosition(0);
+    mystepperLeft.moveTo(480);
+    mystepperRight.moveTo(-480);
+
+
+    while ((mystepperLeft.distanceToGo() > 0 ) || mystepperRight.distanceToGo() > 0) {
+      mystepperLeft.run();
+      mystepperRight.run();
+    }
+
+    goStraight();
+  }  
+
 }
 
 void turnLeft(void) {
