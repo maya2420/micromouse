@@ -7,16 +7,17 @@ bool stuck = true;  //We will use this to signal when all IR sensors detect a de
 
 void goStraight(void);
 void go_short(void);
-int SR = 0, FR = 0, FL = 0, SL = 0;
+int SR = 0, FR = 0, FL = 0, SL = 0, SLN = 700, SRN = 700;
 
-//void turnRight(){
-// mystepperRight.setCurrentPosition(0);
-// mystepperRight.moveTo(632);
-// mystepperRight.runToPosition();
+int cruiseR = 1000;
+int cruiseL = 1000;
+
+unsigned long lasttime = 0;
 
 void turnLeft(void);
 void turnLeft(void);
 void oneeighty(void);
+void unfuck(void);
 
 //Adjustments can made via small tail-fin manuever,
 //by individualy changing single motor accell or speed
@@ -24,12 +25,12 @@ void oneeighty(void);
 void setup() {
   // put your setup code here, to run once:
   mystepperLeft.setMaxSpeed(1000);
-  mystepperLeft.setAcceleration(5000);  //getting up to setMax speed
+  mystepperLeft.setAcceleration(8000);  //getting up to setMax speed
   mystepperLeft.setCurrentPosition(0);
 
 
   mystepperRight.setMaxSpeed(1000);
-  mystepperRight.setAcceleration(5000);
+  mystepperRight.setAcceleration(8000);
   mystepperRight.setCurrentPosition(0);
 
   pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
@@ -41,14 +42,6 @@ void setup() {
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
-
-  // for position and orientation functions
-  int orientation = 1; 
-  int pos[3] = {0,0,0};
-  const int UP = 1;
-  const int RIGHT = 2;
-  const int DOWN = 3;
-  const int LEFT = 4;
 }
 
 void loop() {
@@ -62,23 +55,11 @@ void loop() {
     goStraight();
   } else if (SR > 950) {
     turnRight();
-    updateOrientationCW(orientation);
   } else if (SL > 950) {
     turnLeft();
-    updateOrientationCCW(orientation)
   } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
     oneeighty();
-    updateOrientationCW(orientation);
-    updateOrientationCW(orientation);
   }
-
-    updatePosition(pos[], orientation, currentPosition);
-
-    // for testing:
-    Serial.println("X position: ");
-    Serial.println(pos[0]);
-    Serial.println("Y position: ");
-    Serial.println(pos[1]);
 }
 
 void turnLeft(void) {
@@ -113,10 +94,11 @@ void goStraight(void) {
     mystepperLeft.run();
     mystepperRight.run();
     SR = analogRead(A0);
-  FR = analogRead(A1);
-  FL = analogRead(A2);
-  SL = analogRead(A3);
+    FR = analogRead(A1);
+    FL = analogRead(A2);
+    SL = analogRead(A3);
 
+    unfuck();
 
     if (FR < 950 || FL < 950) {
       mystepperLeft.move(250);
@@ -126,6 +108,10 @@ void goStraight(void) {
         mystepperLeft.run();
         mystepperRight.run();
       }
+      cruiseL = 1000;
+      cruiseR = 1000;
+      mystepperLeft.setMaxSpeed(1000);
+      mystepperRight.setMaxSpeed(1000);
       break;
     }
   }
@@ -148,41 +134,18 @@ void oneeighty(void) {
   mystepperLeft.setAcceleration(4000);
   mystepperRight.setAcceleration(4000);
 }
-
-
-void updateOrientationCW(int & orientation) { // turn clockwise
-  orientation++;
-
-  if (orientation == 5) {
-    orientation = UP;
+void unfuck(void) {
+  if (millis() - lasttime > 2) {
+    lasttime = millis();
+    if (SL < 700 && SL < SLN) {
+      cruiseL = 1000 - SL + 700;
+      mystepperLeft.setMaxSpeed(cruiseL);
+    }
+    if (SR < 700 && SR < SRN) {
+      cruiseR = 1000 - SR + 700;
+      mystepperRight.setMaxSpeed(cruiseR);
+    }
+    SLN = analogRead(A3);
+    SRN = analogRead(A0);
   }
-  return;
-}
-void updateOrientationCCW(int & orientation) { // turn counterclockwise
-  orientation--;
-
-  if (orientation == 0) {
-    orientation = LEFT;
-  }
-  return;
-}
-
-void updatePosition(int pos[], int orientation, int currentPosition) {
-
-  int unitPosition = currentPosition/764 //1 unit is 764 steps
-  if (orientation == UP) {
-    pos[1] = pos[1] + unitPosition;
-  }
-  if (orientation == RIGHT) {
-    pos[0] = pos[0] + unitPosition;   
-  }
-  if (orientation == DOWN) {
-    pos[1] = pos[1] - unitPosition;
-  }
-  if (orientation == LEFT) {
-    pos[0] = pos[0] - unitPosition;
-  }
-  currentPosition = 0;
-
-  return;
 }
