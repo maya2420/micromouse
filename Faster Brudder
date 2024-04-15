@@ -16,6 +16,7 @@ int SR = 0, FR = 0, FL = 0, SL = 0;
 
 void turnLeft(void);
 void turnLeft(void);
+void oneeighty(void);
 
 //Adjustments can made via small tail-fin manuever,
 //by individualy changing single motor accell or speed
@@ -23,12 +24,12 @@ void turnLeft(void);
 void setup() {
   // put your setup code here, to run once:
   mystepperLeft.setMaxSpeed(1000);
-  mystepperLeft.setAcceleration(4000);  //getting up to setMax speed
+  mystepperLeft.setAcceleration(5000);  //getting up to setMax speed
   mystepperLeft.setCurrentPosition(0);
 
 
   mystepperRight.setMaxSpeed(1000);
-  mystepperRight.setAcceleration(4000);
+  mystepperRight.setAcceleration(5000);
   mystepperRight.setCurrentPosition(0);
 
   pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
@@ -55,12 +56,14 @@ void loop() {
     turnRight();
   } else if (SL > 950) {
     turnLeft();
+  } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
+    oneeighty();
   }
 }
 
 void turnLeft(void) {
 
-  mystepperRight.move(480);
+  mystepperRight.move(490);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     mystepperRight.run();
@@ -69,9 +72,9 @@ void turnLeft(void) {
 
 
 void turnRight(void) {
-  
 
-  mystepperLeft.move(480);
+
+  mystepperLeft.move(490);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     mystepperLeft.run();
@@ -90,14 +93,14 @@ void goStraight(void) {
     mystepperLeft.run();
     mystepperRight.run();
     SR = analogRead(A0);
-    FR = analogRead(A1);
-    FL = analogRead(A2);
-    SL = analogRead(A3);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
 
 
-    if ((FR < 950 || FL < 950) && (SR > 950 || SL > 950)) {
-      mystepperLeft.move(180);
-      mystepperRight.move(180);
+    if (FR < 950 || FL < 950) {
+      mystepperLeft.move(250);
+      mystepperRight.move(250);
       while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
         // Run the stepper motors towards their set positions
         mystepperLeft.run();
@@ -106,4 +109,22 @@ void goStraight(void) {
       break;
     }
   }
+}
+void oneeighty(void) {
+  mystepperLeft.setAcceleration(4000);
+  mystepperRight.setAcceleration(4000);
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperLeft.moveTo(480);
+  mystepperRight.moveTo(-480);
+
+
+  while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  mystepperLeft.setAcceleration(4000);
+  mystepperRight.setAcceleration(4000);
 }
