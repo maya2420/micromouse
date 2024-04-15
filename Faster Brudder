@@ -41,6 +41,14 @@ void setup() {
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
+
+  // for position and orientation functions
+  int orientation = 1; 
+  int pos[3] = {0,0,0};
+  const int UP = 1;
+  const int RIGHT = 2;
+  const int DOWN = 3;
+  const int LEFT = 4;
 }
 
 void loop() {
@@ -54,11 +62,23 @@ void loop() {
     goStraight();
   } else if (SR > 950) {
     turnRight();
+    updateOrientationCW(orientation);
   } else if (SL > 950) {
     turnLeft();
+    updateOrientationCCW(orientation)
   } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
     oneeighty();
+    updateOrientationCW(orientation);
+    updateOrientationCW(orientation);
   }
+
+    updatePosition(pos[], orientation, currentPosition);
+
+    // for testing:
+    Serial.println("X position: ");
+    Serial.println(pos[0]);
+    Serial.println("Y position: ");
+    Serial.println(pos[1]);
 }
 
 void turnLeft(void) {
@@ -127,4 +147,42 @@ void oneeighty(void) {
   }
   mystepperLeft.setAcceleration(4000);
   mystepperRight.setAcceleration(4000);
+}
+
+
+void updateOrientationCW(int & orientation) { // turn clockwise
+  orientation++;
+
+  if (orientation == 5) {
+    orientation = UP;
+  }
+  return;
+}
+void updateOrientationCCW(int & orientation) { // turn counterclockwise
+  orientation--;
+
+  if (orientation == 0) {
+    orientation = LEFT;
+  }
+  return;
+}
+
+void updatePosition(int pos[], int orientation, int currentPosition) {
+
+  int unitPosition = currentPosition/764 //1 unit is 764 steps
+  if (orientation == UP) {
+    pos[1] = pos[1] + unitPosition;
+  }
+  if (orientation == RIGHT) {
+    pos[0] = pos[0] + unitPosition;   
+  }
+  if (orientation == DOWN) {
+    pos[1] = pos[1] - unitPosition;
+  }
+  if (orientation == LEFT) {
+    pos[0] = pos[0] - unitPosition;
+  }
+  currentPosition = 0;
+
+  return;
 }
