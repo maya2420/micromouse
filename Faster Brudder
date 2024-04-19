@@ -12,9 +12,9 @@ int cruise = 1000;
 
 unsigned long lasttime = 0;
 
-void goStraight(void);
-void turnLeft(void);
-void turnRight(void);
+void goStraight(void);            //.235mm per step
+void turnLeft(void);              //764 steps is 180mm traveled in strait line
+void turnRight(void);              //382 is 90mm distance
 void oneeightyRight(void);
 void oneeightyLeft(void);
 void unfuck(void);
