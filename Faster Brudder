@@ -3,20 +3,20 @@
 AccelStepper mystepperLeft(1, 5, 4);
 AccelStepper mystepperRight(1, 8, 7);
 
-bool stuck = true;  //We will use this to signal when all IR sensors detect a dead-end
 
-void goStraight(void);
-void go_short(void);
-int SR = 0, FR = 0, FL = 0, SL = 0, SLN = 700, SRN = 700;
+int SR = 0, FR = 0, FL = 0, SL = 0;
 
 int cruiseR = 1000;
 int cruiseL = 1000;
+int cruise = 1000;
 
 unsigned long lasttime = 0;
 
+void goStraight(void);
 void turnLeft(void);
-void turnLeft(void);
-void oneeighty(void);
+void turnRight(void);
+void oneeightyRight(void);
+void oneeightyLeft(void);
 void unfuck(void);
 
 //Adjustments can made via small tail-fin manuever,
@@ -24,13 +24,13 @@ void unfuck(void);
 
 void setup() {
   // put your setup code here, to run once:
-  mystepperLeft.setMaxSpeed(1000);
-  mystepperLeft.setAcceleration(8000);  //getting up to setMax speed
+  mystepperLeft.setMaxSpeed(cruise);
+  mystepperLeft.setAcceleration(4000);  //getting up to setMax speed
   mystepperLeft.setCurrentPosition(0);
 
 
-  mystepperRight.setMaxSpeed(1000);
-  mystepperRight.setAcceleration(8000);
+  mystepperRight.setMaxSpeed(cruise);
+  mystepperRight.setAcceleration(4000);
   mystepperRight.setCurrentPosition(0);
 
   pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
@@ -58,7 +58,12 @@ void loop() {
   } else if (SL > 950) {
     turnLeft();
   } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
-    oneeighty();
+    if(SR > SL){
+      oneeightyRight();
+    }
+    if(SL > SR){
+      oneeightyLeft();
+    }
   }
 }
 
@@ -108,17 +113,18 @@ void goStraight(void) {
         mystepperLeft.run();
         mystepperRight.run();
       }
-      cruiseL = 1000;
-      cruiseR = 1000;
-      mystepperLeft.setMaxSpeed(1000);
-      mystepperRight.setMaxSpeed(1000);
+      cruiseL = cruise;
+      cruiseR = cruise;
+      mystepperLeft.setMaxSpeed(cruise);
+      mystepperRight.setMaxSpeed(cruise);
       break;
     }
   }
 }
-void oneeighty(void) {
-  mystepperLeft.setAcceleration(4000);
-  mystepperRight.setAcceleration(4000);
+void oneeightyRight(void) {
+
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
 
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
@@ -131,21 +137,38 @@ void oneeighty(void) {
     mystepperLeft.run();
     mystepperRight.run();
   }
-  mystepperLeft.setAcceleration(4000);
-  mystepperRight.setAcceleration(4000);
+  //mystepperRight.setAcceleration(8000);
+  //mystepperLeft.setAcceleration(8000);
+}
+void oneeightyLeft(void) {
+
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperLeft.moveTo(-480);
+  mystepperRight.moveTo(480);
+
+
+  while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
 }
 void unfuck(void) {
-  if (millis() - lasttime > 2) {
+  if (millis() - lasttime > 1) {
     lasttime = millis();
-    if (SL < 700 && SL < SLN) {
-      cruiseL = 1000 - SL + 700;
+    if (SL < 800) {
+      cruiseL = cruise - SL + 800;
       mystepperLeft.setMaxSpeed(cruiseL);
     }
-    if (SR < 700 && SR < SRN) {
-      cruiseR = 1000 - SR + 700;
+    if (SR < 800) {
+      cruiseR = cruise  - SR + 800;
       mystepperRight.setMaxSpeed(cruiseR);
     }
-    SLN = analogRead(A3);
-    SRN = analogRead(A0);
   }
 }
