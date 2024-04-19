@@ -4,12 +4,12 @@ AccelStepper mystepperLeft(1, 5, 4);
 AccelStepper mystepperRight(1, 8, 7);
 
 
-int SR = 0, FR = 0, FL = 0, SL = 0;
-
-int cruiseR = 1000;
-int cruiseL = 1000;
-int cruise = 1000;
-
+int SR = 0, FR = 0, FL = 0, SL = 0;      //continous search until Rudder hits a false block in matrix
+                                         //we are thinking of incrimenting traversed blocks based on dead ends, dead-end Blocks will change that matrix postion
+int cruiseR = 1000;                      // into value Alpa_numeric D = dead-end. Blocks with unvisited paths will remain 0 until Rudder checks those paths, 
+int cruiseL = 1000;                      //paths keep each other or remain 0 until we check if those paths result in   
+int cruise = 1000;                       //as 2(which
+              
 unsigned long lasttime = 0;
 
 void goStraight(void);            //.235mm per step
