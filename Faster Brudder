@@ -18,6 +18,7 @@ void turnRight(void);
 void oneeightyRight(void);
 void oneeightyLeft(void);
 void unfuck(void);
+void stop(void);
 
 //Adjustments can made via small tail-fin manuever,
 //by individualy changing single motor accell or speed
@@ -58,10 +59,10 @@ void loop() {
   } else if (SL > 950) {
     turnLeft();
   } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
-    if(SR > SL){
+    if (SR > SL) {
       oneeightyRight();
     }
-    if(SL > SR){
+    if (SL > SR) {
       oneeightyLeft();
     }
   }
@@ -106,17 +107,7 @@ void goStraight(void) {
     unfuck();
 
     if (FR < 950 || FL < 950) {
-      mystepperLeft.move(250);
-      mystepperRight.move(250);
-      while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
-        // Run the stepper motors towards their set positions
-        mystepperLeft.run();
-        mystepperRight.run();
-      }
-      cruiseL = cruise;
-      cruiseR = cruise;
-      mystepperLeft.setMaxSpeed(cruise);
-      mystepperRight.setMaxSpeed(cruise);
+      stop();
       break;
     }
   }
@@ -167,8 +158,21 @@ void unfuck(void) {
       mystepperLeft.setMaxSpeed(cruiseL);
     }
     if (SR < 800) {
-      cruiseR = cruise  - SR + 800;
+      cruiseR = cruise - SR + 800;
       mystepperRight.setMaxSpeed(cruiseR);
     }
   }
+}
+void stop(void) {
+  mystepperLeft.move(250);
+  mystepperRight.move(250);
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    // Run the stepper motors towards their set positions
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  cruiseL = cruise;
+  cruiseR = cruise;
+  mystepperLeft.setMaxSpeed(cruise);
+  mystepperRight.setMaxSpeed(cruise);
 }
