@@ -258,7 +258,6 @@ void wallcheck(void){
     }
     if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 1){
       dis = maze[xpos][ypos] - 100;
-      maze[xpos][ypos] = maze[xpos][ypos] - 100;
     }
   }
 }
