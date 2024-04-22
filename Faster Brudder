@@ -1,32 +1,35 @@
 #include <AccelStepper.h>
-//const int stepsPerRev= 200;
+//const int stepsPerRev= 400;
 AccelStepper mystepperLeft(1, 5, 4);
 AccelStepper mystepperRight(1, 8, 7);
 
 
-int SR = 0, FR = 0, FL = 0, SL = 0;      //continous search until Rudder hits a false block in matrix
-                                         //we are thinking of incrimenting traversed blocks based on dead ends, dead-end Blocks will change that matrix postion
-int cruiseR = 1000;                      // into value Alpa_numeric D = dead-end. Blocks with unvisited paths will remain 0 until Rudder checks those paths, 
-int cruiseL = 1000;                      //paths keep each other or remain 0 until we check if those paths result in   
-int cruise = 1000;                       //as 2(which
-              
-unsigned long lasttime = 0;
+int SR = 0, FR = 0, FL = 0, SL = 0; //storing the value of the infrared sensors
 
-void goStraight(void);            //.235mm per step
-void turnLeft(void);              //764 steps is 180mm traveled in strait line
-void turnRight(void);              //382 is 90mm distance
-void oneeightyRight(void);
-void oneeightyLeft(void);
-void unfuck(void);
-void stop(void);
+int cruiseR = 1000;  // modified cruise speed of right wheel to keep you centered
+int cruiseL = 1000;  // modified cruise speed of left wheel to keep you centered
+int cruise = 1000; // actual cruising speed when searching
 
-//Adjustments can made via small tail-fin manuever,
-//by individualy changing single motor accell or speed
+unsigned long lasttime = 0; // for doing delays kinda. just go look.
+
+void goStraight(void); // self explanatory
+void turnLeft(void);  // self explanatory
+void turnRight(void);  // self explanatory
+void oneeightyRight(void); // self explanatory but it turns in the direction of the wall it's furthest from
+void oneeightyLeft(void); // self explanatory but it turns in the direction of the wall it's furthest from
+void unfuck(void); //this function keeps you centetred between maze walls when navigating
+void stop(void); //this function makes you stop
+
+void wallcheck(void);
+
+int maze[5][5] = {0};
+int dir = 1,xpos = 0, ypos = 0, dis = 0; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
+int checkspot = 764;
 
 void setup() {
   // put your setup code here, to run once:
   mystepperLeft.setMaxSpeed(cruise);
-  mystepperLeft.setAcceleration(4000);  //getting up to setMax speed
+  mystepperLeft.setAcceleration(4000);
   mystepperLeft.setCurrentPosition(0);
 
 
@@ -36,8 +39,9 @@ void setup() {
 
   pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
   pinMode(10, OUTPUT);    //this pin is M2, used to configure modes for fractional steps
-  digitalWrite(9, HIGH);  //We use this to make half-steps
-  digitalWrite(10, LOW);  //Must be turned off to make half-steps
+
+  digitalWrite(9, HIGH);  //if 9 is low and 10 is low you do full steps. 9 high 10 low is half steps. 10 high 9 low quarter steps. 9 high 10 high eight steps
+  digitalWrite(10, LOW);  
 
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
@@ -69,6 +73,15 @@ void loop() {
 }
 
 void turnLeft(void) {
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  dir = dir - 1;
+  if(dir < 1){
+    dir = 4;
+  }
+
+  checkspot = 382;
 
   mystepperRight.move(490);
 
@@ -80,17 +93,30 @@ void turnLeft(void) {
 
 void turnRight(void) {
 
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  dir = dir + 1;
+  if(dir > 4){
+    dir = 1;
+  }
+
+  checkspot = 382;
 
   mystepperLeft.move(490);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     mystepperLeft.run();
   }
+  
 }
 
 
 
 void goStraight(void) {
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
 
   mystepperLeft.move(12224);
   mystepperRight.move(12224);
@@ -108,6 +134,7 @@ void goStraight(void) {
 
     if (FR < 950 || FL < 950) {
       stop();
+      checkspot = 764;
       break;
     }
   }
@@ -116,6 +143,14 @@ void oneeightyRight(void) {
 
   //mystepperRight.setAcceleration(4000);
   //mystepperLeft.setAcceleration(4000);
+
+  dir = dir + 2;
+  if(dir == 5){
+    dir = 1;
+  }
+  if(dir == 6){
+    dir = 2;
+  }
 
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
@@ -135,6 +170,14 @@ void oneeightyLeft(void) {
 
   //mystepperRight.setAcceleration(4000);
   //mystepperLeft.setAcceleration(4000);
+
+  dir = dir - 2;
+  if(dir == 0){
+    dir = 4;
+  }
+  if(dir == -1){
+    dir = 3;
+  }
 
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
@@ -175,4 +218,47 @@ void stop(void) {
   cruiseR = cruise;
   mystepperLeft.setMaxSpeed(cruise);
   mystepperRight.setMaxSpeed(cruise);
+}
+void wallcheck(void){
+  if(mystepperLeft.currentPosition() > checkspot){
+    checkspot = checkspot + 764;
+    if(dir == 1){
+      ypos = ypos + 1;
+    }
+    if(dir == 2){
+      xpos = xpos + 1;
+    }
+    if(dir == 3){
+      ypos = ypos - 1;
+    }
+    if(dir == 4){
+      xpos = xpos - 1;
+    }
+
+
+    if(maze[xpos][ypos] == 0 && branch == 0 && deadend  == 0){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis;
+    }
+    if(deadend  == 1){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis + 200;
+    }
+    if(maze[xpos][ypos] == 0 && branch == 1){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis + 100;
+    }
+    if(maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100){
+      dis = maze[xpos][ypos];
+      maze[xpos][ypos] = maze[xpos][ypos] + 200;
+    }
+    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 0){
+      dis = maze[xpos][ypos] - 100;
+      maze[xpos][ypos] = maze[xpos][ypos] - 100;
+    }
+    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 1){
+      dis = maze[xpos][ypos] - 100;
+      maze[xpos][ypos] = maze[xpos][ypos] - 100;
+    }
+  }
 }
