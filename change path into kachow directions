@@ -1,0 +1,94 @@
+#include <vector>
+using namespace std;
+
+  int cX = 0;
+  int cY = 0;
+  int oX = 0;
+  int oY = 0;
+  int matrixSize = 25;
+  int maze[5][5];
+  int virdir; //direction going to go in, not current direction
+  int vals[50];
+  int valsSize = 0;
+  
+  
+  struct stuff{
+    bool whereTurn;
+    int distance;
+  };
+
+  vector <stuff> runRudderRun;
+  int vectorSize = 0;
+
+
+  void find(){
+    int c = 1;
+
+    for(int i = 0; i<matrixSize; i++){
+      for(int j = 0; j<matrixSize; j++){
+        if(maze[i][j] == c+1){
+          c++;
+          cX = i;
+          cY = j;
+          return;
+        }
+      }
+    } 
+  }
+
+int count = 0;
+  void where(){
+    
+    if(oX > cX){
+      virdir = 4;
+    }
+
+    if(oX > cX){
+      virdir = 2;
+    }
+
+    if(oY > cY){
+      virdir = 3;
+    }
+
+    if(oY < cY){
+      virdir = 1;
+    }
+
+    oX = cX;
+    oY = cY;
+    vals[count] = virdir;
+    valsSize++;
+
+  }
+
+
+  bool turn; // true = right; false = left;
+  int block = 0;
+  int c = 0; // current
+  int f= 1; //future
+  int x = 0; //incrementing
+  void turnToDirections(){
+    
+    if(vals[c] == vals[f]){
+      block++;
+    }
+    else if( vals[c] == 1 && vals[f] == 4){
+      turn = false;
+    }
+    else if( vals[c] == 4 && vals[f] == 1){
+      turn = true;
+    }
+    else if( vals[c] != 4 && vals[c] < vals[f]){
+      turn = true;
+    }
+    else{
+      turn = false;
+    }
+
+  
+    runRudderRun[x].whereTurn = turn;
+    runRudderRun[x].distance = (block*764) - 382;
+    x++;
+    vectorSize++;
+  }
