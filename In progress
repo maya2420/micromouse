@@ -266,7 +266,7 @@ void mazeup(void){
     }
     deadend = 0;
     branch = 0;
-  }
+}
 void wallcheck(void){
   if (FR < 950 && FL < 950 && SR < 950 && SL < 950){
     deadend = 1;
@@ -316,6 +316,4 @@ void wallcheck(void){
       branch = 0;
     }
   }
-
-
 }
