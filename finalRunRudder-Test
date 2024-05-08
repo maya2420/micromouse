@@ -1,0 +1,440 @@
+#include <AccelStepper.h>
+#include <vector>
+using namespace std;
+//const int stepsPerRev= 400;
+AccelStepper mystepperLeft(1, 5, 4);
+AccelStepper mystepperRight(1, 8, 7);
+
+
+
+int SR = 0, FR = 0, FL = 0, SL = 0; //storing the value of the infrared sensors
+
+int cruiseR = 1000;  // modified cruise speed of right wheel to keep you centered
+int cruiseL = 1000;  // modified cruise speed of left wheel to keep you centered
+int cruise = 1000; // actual cruising speed when searching
+
+unsigned long lasttime = 0; // for doing delays kinda. just go look.
+
+int cX = 0;
+int cY = 0;
+int oX = 0;
+int oY = 0;
+int matrixSize = 25;
+int virdir; //direction going to go in, not current direction
+int vals[50];
+int valsSize = 0;
+bool turn; // true = right; false = left;
+int block = 0;
+int c = 0; // current
+int f= 1; //future
+int x = 0; //incrementing
+  
+struct stuff{
+    bool whereTurn;
+    int distance;
+  };
+
+vector <stuff> runRudderRun;
+int vectorSize = 0;
+
+void goStraight(void); // self explanatory
+void turnLeft(void);  // self explanatory
+void turnRight(void);  // self explanatory
+void oneeightyRight(void); // self explanatory but it turns in the direction of the wall it's furthest from
+void oneeightyLeft(void); // self explanatory but it turns in the direction of the wall it's furthest from
+
+void unfuck(void); //this function keeps you centetred between maze walls when navigating
+void stop(void); //this function makes you stop
+void where();
+void turnToDirections();
+
+void wallcheck(void);
+void find();
+
+int maze[5][5] = {0};
+int dir = 1,xpos = 0, ypos = 0, dis = 0; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
+int checkspot = 0; //initially set to zero to check starting position
+bool deadend;
+bool branch, searching = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  mystepperLeft.setMaxSpeed(cruise);
+  mystepperLeft.setAcceleration(4000);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperRight.setMaxSpeed(cruise);
+  mystepperRight.setAcceleration(4000);
+  mystepperRight.setCurrentPosition(0);
+
+  pinMode(9, OUTPUT);     //this pin is M1, used to configure modes for fractional steps
+  pinMode(10, OUTPUT);    //this pin is M2, used to configure modes for fractional steps
+
+  digitalWrite(9, HIGH);  //if 9 is low and 10 is low you do full steps. 9 high 10 low is half steps. 10 high 9 low quarter steps. 9 high 10 high eight steps
+  digitalWrite(10, LOW);  
+
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  //pinMode(A3, INPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  SR = analogRead(A0);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
+
+finalRun();
+  
+ /* if (FR > 950 || FL > 950) {
+    goStraight();
+  } else if (SR > 950) {
+    turnRight();
+  } else if (SL > 950) {
+    turnLeft();
+  } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
+    if (SR > SL) {
+      oneeightyRight();
+    }
+    if (SL > SR) {
+      oneeightyLeft();
+    }
+  } */
+}
+
+//void finalRun(int finalPath[]) {
+  void finalRun(void) {
+  int initialIndex = 1;
+  int index = 1;
+  int straightCount=0;
+  int finalPath[10] = {1, 1, 4, 4, 1, 1, 2, 2, 3, 4};
+  while (initialIndex != (sizeof(finalPath)/sizeof(int))) {
+    for (int i=0; finalPath[(initialIndex+i)] = finalPath[initialIndex]; i++) {
+      index++;
+      straightCount++;
+
+  }
+    goStraight(straightCount);
+
+    if ((finalPath[index] == finalPath[index] + 1) || (finalPath[index] == finalPath[index] - 3)) {
+      turnRight();
+  } else if ((finalPath[index] == finalPath[index] - 1) || (finalPath[index] == finalPath[index] + 3)) {
+      turnLeft();
+  }
+    index++;
+    initialIndex = index;
+    straightCount=0;
+  }
+}
+
+void find(){
+    int c = 1;
+
+    for(int i = 0; i<matrixSize; i++){
+      for(int j = 0; j<matrixSize; j++){
+        if(maze[i][j] == c+1){
+          c++;
+          cX = i;
+          cY = j;
+          return;
+        }
+      }
+    } 
+}
+
+int count = 0;
+void where(){
+    
+    if(oX > cX){
+      virdir = 4;
+    }
+
+    if(oX > cX){
+      virdir = 2;
+    }
+
+    if(oY > cY){
+      virdir = 3;
+    }
+
+    if(oY < cY){
+      virdir = 1;
+    }
+
+    oX = cX;
+    oY = cY;
+    vals[count] = virdir;
+    valsSize++;
+}
+
+void turnToDirections(){  
+    if(vals[c] == vals[f]){
+      block++;
+    }
+    else if( vals[c] == 1 && vals[f] == 4){
+      turn = false;
+    }
+    else if( vals[c] == 4 && vals[f] == 1){
+      turn = true;
+    }
+    else if( vals[c] != 4 && vals[c] < vals[f]){
+      turn = true;
+    }
+    else{
+      turn = false;
+    }
+
+  
+    runRudderRun[x].whereTurn = turn;
+    runRudderRun[x].distance = (block*764) - 382;
+    x++;
+    vectorSize++;
+}
+
+void turnLeft(void) {
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  dir = dir - 1;
+  if(dir < 1){
+    dir = 4;
+  }
+
+  checkspot = 382;
+
+  mystepperRight.move(490);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    mystepperRight.run();
+  }
+}
+
+void turnRight(void) {
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  dir = dir + 1;
+  if(dir > 4){
+    dir = 1;
+  }
+
+  checkspot = 382;
+
+  mystepperLeft.move(490);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+  }
+  
+}
+
+void goStraight(int straightCount) {
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperLeft.move(764*straightCount);
+  mystepperRight.move(764*straightCount);
+
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    // Run the stepper motors towards their set positions
+    mystepperLeft.run();
+    mystepperRight.run();
+    SR = analogRead(A0);
+    FR = analogRead(A1);
+    FL = analogRead(A2);
+    SL = analogRead(A3);
+
+    unfuck();
+    posup();
+
+    if ((FR < 950 || FL < 950) && searching == 1) {
+      stop();
+      break;
+    }
+  }
+}
+
+void oneeightyRight(void) {
+
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
+
+  dir = dir + 2;
+  if(dir == 5){
+    dir = 1;
+  }
+  if(dir == 6){
+    dir = 2;
+  }
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperLeft.moveTo(480);
+  mystepperRight.moveTo(-480);
+
+
+  while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  //mystepperRight.setAcceleration(8000);
+  //mystepperLeft.setAcceleration(8000);
+}
+void oneeightyLeft(void) {
+
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
+
+  dir = dir - 2;
+  if(dir == 0){
+    dir = 4;
+  }
+  if(dir == -1){
+    dir = 3;
+  }
+
+  mystepperRight.setCurrentPosition(0);
+  mystepperLeft.setCurrentPosition(0);
+
+  mystepperLeft.moveTo(-480);
+  mystepperRight.moveTo(480);
+
+
+  while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  //mystepperRight.setAcceleration(4000);
+  //mystepperLeft.setAcceleration(4000);
+}
+void unfuck(void) {
+  if (millis() - lasttime > 1) {
+    lasttime = millis();
+    if (SL < 800) {
+      cruiseL = cruise - SL + 800;
+      mystepperLeft.setMaxSpeed(cruiseL);
+    }
+    if (SR < 800) {
+      cruiseR = cruise - SR + 800;
+      mystepperRight.setMaxSpeed(cruiseR);
+    }
+  }
+}
+void stop(void) {
+  mystepperLeft.move(250);
+  mystepperRight.move(250);
+  while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
+    // Run the stepper motors towards their set positions
+    mystepperLeft.run();
+    mystepperRight.run();
+  }
+  checkspot = 0;
+  posup();
+  cruiseL = cruise;
+  cruiseR = cruise;
+  mystepperLeft.setMaxSpeed(cruise);
+  mystepperRight.setMaxSpeed(cruise);
+}
+void posup(void){
+  if(mystepperLeft.currentPosition() >= checkspot){
+    checkspot = checkspot + 764;
+    if(dir == 1){
+      ypos = ypos + 1;
+    }
+    if(dir == 2){
+      xpos = xpos + 1;
+    }
+    if(dir == 3){
+      ypos = ypos - 1;
+    }
+    if(dir == 4){
+      xpos = xpos - 1;
+    }
+  }
+  wallcheck();
+  mazeup();
+}
+void mazeup(void){
+  if(maze[xpos][ypos] == 0 && branch == 0 && deadend  == 0){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis;
+    }
+    if(deadend  == 1){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis + 200;
+    }
+    if(maze[xpos][ypos] == 0 && branch == 1){
+      dis = dis + 1;
+      maze[xpos][ypos] = dis + 100;
+    }
+    if(maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100){
+      dis = maze[xpos][ypos];
+      maze[xpos][ypos] = maze[xpos][ypos] + 200;
+    }
+    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 0){
+      dis = maze[xpos][ypos] - 100;
+      maze[xpos][ypos] = maze[xpos][ypos] - 100;
+    }
+    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 1){
+      dis = maze[xpos][ypos] - 100;
+    }
+    deadend = 0;
+    branch = 0;
+  }
+void wallcheck(void){
+  if (FR < 950 && FL < 950 && SR < 950 && SL < 950){
+    deadend = 1;
+  }
+  if(FR > 950 && SR > 950){
+    branch = 1;
+    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 2 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+  }
+  if(FL > 950 && SL > 950){
+    branch = 1;
+    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 4 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+  }
+  if(SR > 950 && SL > 950){
+    branch = 1;
+    if(dir == 1 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+      branch = 0;
+    }
+    if(dir == 3 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
+    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+      branch = 0;
+    }
+  }
+
+
+}
