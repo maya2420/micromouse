@@ -167,6 +167,19 @@ void turnToDirections(){
     vectorSize++;
 }
 
+void go(){
+  for(int i = 0; i<vectorSize; i++){
+    goStraight(runRudderRun[i].distance); //need to fix funtion to fit this purpose
+
+    if(runRudderRun[i].whereTurn){
+      turnRight();
+    }
+    else{
+      turnLeft();
+    }
+  }
+}
+
 void turnLeft(void) {
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
