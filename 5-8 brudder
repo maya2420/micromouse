@@ -1,4 +1,4 @@
-  #include <AccelStepper.h>
+#include <AccelStepper.h>
   #include <vector>
   using namespace std;
 //const int stepsPerRev= 400;
@@ -27,6 +27,7 @@ int block = 0;
 int c = 0; // current
 int f= 1; //future
 int x = 0; //incrementing
+int straightCount = 0;
   
   struct stuff{
     bool whereTurn;
@@ -36,7 +37,7 @@ int x = 0; //incrementing
   vector <stuff> runRudderRun;
   int vectorSize = 0;
 
-void goStraight(void); // self explanatory
+void goStraight(int straightCount); // self explanatory
 void turnLeft(void);  // self explanatory
 void turnRight(void);  // self explanatory
 void oneeightyRight(void); // self explanatory but it turns in the direction of the wall it's furthest from
@@ -44,8 +45,8 @@ void oneeightyLeft(void); // self explanatory but it turns in the direction of t
 
 void unfuck(void); //this function keeps you centetred between maze walls when navigating
 void stop(void); //this function makes you stop
-void where()
-void turnToDirections()
+void where();
+void turnToDirections();
 
 void wallcheck(void);
 void find();
@@ -54,7 +55,28 @@ int maze[5][5] = {0};
 int dir = 1,xpos = 0, ypos = 0, dis = 0; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
 int checkspot = 0; //initially set to zero to check starting position
 bool deadend;
-bool branch;
+bool branch, searching = 1;
+
+int moveCount = 0;
+int goalx = 0;
+int goaly = 0;
+
+// testing code - if using, update find(maze to matrix), update moveCount, and change loop
+/*
+int matrix[5][5] = { {0,1,2,3,4}, 
+                    {0,1,2,3,4},
+                    {0,1,2,3,4},
+                    {0,1,2,3,4},
+                    {0,1,2,3,4}, }; 
+
+for(int x = 0; x<moveCount ; x++){
+    find();
+    where();
+    turnToDirections();
+  }
+  go();
+
+*/
 
 void setup() {
   // put your setup code here, to run once:
@@ -87,7 +109,7 @@ void loop() {
   SL = analogRead(A3);
 
   if (FR > 950 || FL > 950) {
-    goStraight();
+    //goStraight(); //are there two functions or does it need to be edited to goStraight(distance);
   } else if (SR > 950) {
     turnRight();
   } else if (SL > 950) {
@@ -100,14 +122,21 @@ void loop() {
       oneeightyLeft();
     }
   }
+  if(xpos == goalx && ypos == goaly){
+    for(int x = 0; x<moveCount ; x++){
+      find();
+      where();
+      turnToDirections();
+    }
+  }
 }
 
-int c = 1;
+int countPos= 1;
 void find(){
     for(int i = 0; i<matrixSize; i++){
       for(int j = 0; j<matrixSize; j++){
-        if(maze[i][j] == c+1){
-          c++;
+        if(maze[i][j] == countPos+1){
+          countPos++;
           cX = i;
           cY = j;
           return;
@@ -218,13 +247,13 @@ void turnRight(void) {
   
 }
 
-void goStraight(void) {
+void goStraight(int straightCount) {
 
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
 
-  mystepperLeft.move(12224);
-  mystepperRight.move(12224);
+  mystepperLeft.move(straightCount);
+  mystepperRight.move(straightCount);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     // Run the stepper motors towards their set positions
@@ -238,7 +267,7 @@ void goStraight(void) {
     unfuck();
     posup();
 
-    if (FR < 950 || FL < 950) {
+    if ((FR < 950 || FL < 950) && searching  == 1) {
       stop();
       break;
     }
