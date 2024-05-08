@@ -1,0 +1,21 @@
+void loop() {
+  // put your main code here, to run repeatedly:
+  SR = analogRead(A0);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
+
+  for(int x = 0; x<moveCount ; x++){
+    find();
+    where();
+    turnToDirections();
+  }
+  go();
+}
+
+int moveCount = 0; //make sure to update before running
+int matrix[5][5] = { {0,1,2,3,4},
+                    {0,1,2,3,4},
+                    {0,1,2,3,4},
+                    {0,1,2,3,4},
+                    {0,1,2,3,4}, };
