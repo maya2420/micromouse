@@ -9,9 +9,9 @@ AccelStepper mystepperRight(1, 8, 7);
 
 int SR = 0, FR = 0, FL = 0, SL = 0; //storing the value of the infrared sensors
 
-int cruiseR = 1000;  // modified cruise speed of right wheel to keep you centered
-int cruiseL = 1000;  // modified cruise speed of left wheel to keep you centered
-int cruise = 1000; // actual cruising speed when searching
+int cruiseR = 1500;  // modified cruise speed of right wheel to keep you centered
+int cruiseL = 1500;  // modified cruise speed of left wheel to keep you centered
+int cruise = 1500; // actual cruising speed when searching
 
 unsigned long lasttime = 0; // for doing delays kinda. just go look.
 
@@ -106,27 +106,35 @@ finalRun();
 
 //void finalRun(int finalPath[]) {
   void finalRun(void) {
-  int initialIndex = 1;
-  int index = 1;
-  int straightCount=0;
-  int finalPath[10] = {1, 1, 4, 4, 1, 1, 2, 2, 3, 4};
-  while (initialIndex != (sizeof(finalPath)/sizeof(int))) {
-    for (int i=0; finalPath[(initialIndex+i)] = finalPath[initialIndex]; i++) {
-      index++;
-      straightCount++;
+    int initialIndex = 0;
+    int index = 0;
+    int straightCount=0;
+    bool turnYet = false;
+    int finalPath[17] = {1, 1, 1, 2, 2, 2, 2, 3, 4, 3, 4, 4, 3, 2, 2, 2, 1};
+    while (initialIndex < (sizeof(finalPath)/sizeof(int))) {
+      for (int i=0; finalPath[(initialIndex+i)] == finalPath[initialIndex]; i++) {
+        index++;
+        straightCount++;
 
   }
+  if (turnYet) {
+    goStraight(straightCount-0.4);
+  }
+  else {
     goStraight(straightCount);
+  }
 
-    if ((finalPath[index] == finalPath[index] + 1) || (finalPath[index] == finalPath[index] - 3)) {
+    if ((finalPath[index] == (finalPath[initialIndex] + 1)) || (finalPath[index] == (finalPath[initialIndex] - 3))) {
       turnRight();
-  } else if ((finalPath[index] == finalPath[index] - 1) || (finalPath[index] == finalPath[index] + 3)) {
+  } else if ((finalPath[index] == (finalPath[initialIndex] - 1)) || (finalPath[index] == (finalPath[initialIndex] + 3))) {
       turnLeft();
   }
-    index++;
+    //index++;
+    turnYet = true;
     initialIndex = index;
     straightCount=0;
   }
+  break;
 }
 
 void find(){
@@ -231,7 +239,7 @@ void turnRight(void) {
   
 }
 
-void goStraight(int straightCount) {
+void goStraight(double straightCount) {
 
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
