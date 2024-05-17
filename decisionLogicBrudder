@@ -28,7 +28,7 @@ void turnToDirections(); //puts information into directions of brudder
 void go();
 void wallcheck(void);
 
-int maze[5][5] = {0};
+int maze[5][5]={0};
 int dir = 1,xpos = 0, ypos = 0, dis = 1; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
 int checkspot = 0; //initially set to zero to check starting position
 bool deadend;
@@ -84,6 +84,7 @@ void setup() {
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
   pinMode(A3, INPUT);
+
 }
 
 
@@ -145,7 +146,7 @@ go();
 void find(){
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
-            if (matrix[i][j] == countPos) {
+            if (maze[i][j] == countPos) {
                 countPos++;
                 cX = i;
                 cY = j;
@@ -305,8 +306,11 @@ void goStraight(int straightCount) {
     posup();
 
     if ((FR < 950 || FL < 950) && searching  == 1) {
-      stop();
+      stop(250);
       break;
+    }
+    if (searching == 1) {
+      lookAhead();
     }
   }
 }
@@ -377,9 +381,9 @@ void unfuck(void) {
     }
   }
 }
-void stop(void) {
-  mystepperLeft.move(250);
-  mystepperRight.move(250);
+void stop(int stopIn) {
+  mystepperLeft.move(stopIn);
+  mystepperRight.move(stopIn);
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     // Run the stepper motors towards their set positions
     mystepperLeft.run();
@@ -487,7 +491,7 @@ void wallcheck(void){
       branch = 0;
     }
   }
-  
+}  
 void physicalSearch(void) {
   bool optionR = false;
   bool optionL = false;
@@ -498,43 +502,46 @@ void physicalSearch(void) {
   if (dir == 1) {
 
     if (FR > 950) {
-      if (maze[xpos,ypos+1] < 200) {
+      if (maze[xpos][ypos+1] < 200) {
         optionS = true;
       }
     }
 
     if (SR > 950) {
 
-      if (maze[xpos+1,ypos] < 200) {
+      if (maze[xpos+1][ypos] < 200) {
         optionR = true;
       }
     }
 
     if (SL > 950) {
 
-      if (maze[xpos-1,ypos] < 200) {
+      if (maze[xpos-1][ypos] < 200) {
         optionL = true;
       }
       
     }
     if (optionS && optionR && optionL) {
-      if (maze[xpos,ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos][ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos+1,ypos] == 0) {
+      else if (maze[xpos+1][ypos] == 0) {
         turnRight();
-      } else if (maze[xpos-1,ypos] == 0) {
+      } else if (maze[xpos-1][ypos] == 0) {
           turnLeft();
       } else {
-          goStraight();
-      } else if (optionR && optionL) {
-          if (maze[xpos+1,ypos] == 0) {
+          goStraight(12000);
+      }
+    } else if (optionR && optionL) {
+          if (maze[xpos+1][ypos] == 0) {
             turnRight();
-          } else if (maze[xpos-1,ypos] == 0) {
+          } else if (maze[xpos-1][ypos] == 0) {
             turnLeft();
+          } else {
+            turnRight();
           }
       }
-    } else if (optionR) {
+     else if (optionR) {
         turnRight();
     } else if (optionL) {
         turnLeft();
@@ -543,140 +550,168 @@ void physicalSearch(void) {
     if (dir == 2) {
       
       if (FR > 950) {
-        if (maze[xpos+1,ypos] < 200) {
+        if (maze[xpos+1][ypos] < 200) {
           optionS = true;
         }
       }
 
       if (SR > 950) {
 
-        if (maze[xpos,ypos-1] < 200) {
+        if (maze[xpos][ypos-1] < 200) {
           optionR = true;
         }
      }
 
       if (SL > 950) {
 
-        if (maze[xpos,ypos+1] < 200) {
+        if (maze[xpos][ypos+1] < 200) {
           optionL = true;
         }
       }
     if (optionS && optionR && optionL) {
-      if (maze[xpos+1,ypos] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos+1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos,ypos-1] == 0) {
+      else if (maze[xpos][ypos-1] == 0) {
         turnRight();
-      } else if (maze[xpos,ypos+1] == 0) {
+      } else if (maze[xpos][ypos+1] == 0) {
           turnLeft();
       } else {
-          goStraight();
-      } else if (optionR && optionL) {
-          if (maze[xpos,ypos-1] == 0) {
+          goStraight(12000);
+      } 
+    } else if (optionR && optionL) {
+          if (maze[xpos][ypos-1] == 0) {
             turnRight();
-          } else if (maze[xpos,ypos+1] == 0) {
+          } else if (maze[xpos][ypos+1] == 0) {
             turnLeft();
+          } else {
+            turnRight();
           }
+      } else if (optionR) {
+          turnRight();
+      } else if (optionL) {
+          turnLeft();
       }
-    } else if (optionR) {
-        turnRight();
-    } else if (optionL) {
-        turnLeft();
-    }
     }
 
     if (dir == 3) {
 
       if (FR > 950) {
-        if (maze[xpos,ypos-1] < 200) {
+        if (maze[xpos][ypos-1] < 200) {
           optionS = true;
         }
     }
 
       if (SR > 950) {
 
-        if (maze[xpos-1,ypos] < 200) {
+        if (maze[xpos-1][ypos] < 200) {
           optionR = true;
         }
       }
 
       if (SL > 950) {
 
-        if (maze[xpos+1,ypos] < 200) {
+        if (maze[xpos+1][ypos] < 200) {
           optionL = true;
         }
       
       }
     if (optionS && optionR && optionL) {
-      if (maze[xpos,ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos][ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos-1,ypos] == 0) {
+      else if (maze[xpos-1][ypos] == 0) {
         turnRight();
-      } else if (maze[xpos+1,ypos] == 0) {
+      } else if (maze[xpos+1][ypos] == 0) {
           turnLeft();
       } else {
-          goStraight();
-      } else if (optionR && optionL) {
-          if (maze[xpos-1,ypos] == 0) {
-            turnRight();
-          } else if (maze[xpos+1,ypos] == 0) {
-            turnLeft();
-          }
+          goStraight(12000);
       }
-    } else if (optionR) {
-        turnRight();
-    } else if (optionL) {
-        turnLeft();
-    }
+    } else if (optionR && optionL) {
+        if (maze[xpos-1][ypos] == 0) {
+          turnRight();
+        } else if (maze[xpos+1][ypos] == 0) {
+          turnLeft();
+        } else {
+          turnRight();
+        }
+      } else if (optionR) {
+          turnRight();
+      } else if (optionL) {
+          turnLeft();
+      }
     }
     if (dir == 4) {
 
       if (FR > 950) {
-        if (maze[xpos-1,ypos] < 200) {
+        if (maze[xpos-1][ypos] < 200) {
           optionS = true;
         }
     }
 
       if (SR > 950) {
 
-        if (maze[xpos,ypos+1] < 200) {
+        if (maze[xpos][ypos+1] < 200) {
           optionR = true;
         }
       }
 
       if (SL > 950) {
 
-        if (maze[xpos,ypos-1] < 200) {
+        if (maze[xpos][ypos-1] < 200) {
           optionL = true;
         }
       
       }
-    if (optionS && optionR && optionL) {
-      if (maze[xpos-1,ypos] == 0) { //most likely can delete bc optionS will never equal 0
-        goStraight(12000);
-      }
-      else if (maze[xpos,ypos+1] == 0) {
-        turnRight();
-      } else if (maze[xpos,ypos-1] == 0) {
-          turnLeft();
-      } else {
-          goStraight();
-      } else if (optionR && optionL) {
-          if (maze[xpos,ypos+1] == 0) {
-            turnRight();
-          } else if (maze[xpos,ypos-1] == 0) {
+      if (optionS && optionR && optionL) {
+        if (maze[xpos-1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
+          goStraight(12000);
+        }
+        else if (maze[xpos][ypos+1] == 0) {
+          turnRight();
+        } else if (maze[xpos][ypos-1] == 0) {
             turnLeft();
+        } else {
+            goStraight(12000);
+        } 
+      } else if (optionR && optionL) {
+          if (maze[xpos][ypos+1] == 0) {
+            turnRight();
+          } else if (maze[xpos][ypos-1] == 0) {
+            turnLeft();
+          } else {
+            turnRight();
           }
+        } else if (optionR) {
+            turnRight();
+        } else if (optionL) {
+            turnLeft();
       }
-    } else if (optionR) {
-        turnRight();
-    } else if (optionL) {
-        turnLeft();
-    }
     }
       
     if (FR < 950 && SR < 950 && SL < 950) {
-      oneeighty();
+      oneeightyRight();
     }
+}
+void lookAhead(void) {
+  if (dir == 1) {
+    if ((maze[xpos][ypos+1] < 200) && (maze[xpos][ypos+1] > 100)) {
+      stop(764);
+    }
+  }
+  if (dir == 2) {
+    if ((maze[xpos+1][ypos] < 200) && (maze[xpos+1][ypos] > 100)) {
+      stop(764);
+    }
+  }
+  if (dir == 3) {
+    if ((maze[xpos][ypos-1] < 200) && (maze[xpos][ypos-1] > 100)) {
+      stop(764);
+    }
+  }
+  if (dir == 4) {
+    if ((maze[xpos-1][ypos] < 200) && (maze[xpos-1][ypos] > 100)) {
+      stop(764);
+    }
+  }
 }
