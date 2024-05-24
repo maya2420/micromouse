@@ -309,6 +309,7 @@ void goStraight(int straightCount) {
       stop(250);
       break;
     }
+    // if in the searching phase, look ahead
     if (searching == 1) {
       lookAhead();
     }
@@ -381,6 +382,8 @@ void unfuck(void) {
     }
   }
 }
+
+// i updated stop to take in an integer. the integer represents how many steps until needed to stop. doing this made it possible to use for the lookAhead function as well
 void stop(int stopIn) {
   mystepperLeft.move(stopIn);
   mystepperRight.move(stopIn);
@@ -493,60 +496,70 @@ void wallcheck(void){
   }
 }  
 void physicalSearch(void) {
+
+  // option for going right, left, and straght after a stop are set to false until validation
   bool optionR = false;
   bool optionL = false;
   bool optionS = false;
 
-  goStraight(12000);
+  goStraight(12000); // rudder goes straight until either a wall or lookAhead stops him
 
+  // for each of the directions, rudder will decide if right, left, or straight are options
   if (dir == 1) {
 
-    if (FR > 950) {
-      if (maze[xpos][ypos+1] < 200) {
+    if (FR > 950) { // making sure no wall is in front
+
+      if (maze[xpos][ypos+1] < 200) { // when direction = 1, straight results in the y position increasing by 1
         optionS = true;
       }
     }
 
-    if (SR > 950) {
+    if (SR > 950) { // making sure no wall is to the right
 
-      if (maze[xpos+1][ypos] < 200) {
+      if (maze[xpos+1][ypos] < 200) { // when direction = 1, right results in the x position increasing by 1
         optionR = true;
       }
     }
 
-    if (SL > 950) {
+    if (SL > 950) { // making sure no wall is to the left
 
-      if (maze[xpos-1][ypos] < 200) {
+      if (maze[xpos-1][ypos] < 200) { // when direction = 1, left results in the x position decreasing by 1
         optionL = true;
       }
       
     }
+    // if all options are open, we will prioritize unknown spaces, then straight, then right, then left
     if (optionS && optionR && optionL) {
-      if (maze[xpos][ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos][ypos+1] == 0) { // most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos+1][ypos] == 0) {
+      else if (maze[xpos+1][ypos] == 0) { // checking to see if the square to the right is equal to 0
         turnRight();
-      } else if (maze[xpos-1][ypos] == 0) {
+      } else if (maze[xpos-1][ypos] == 0) { // checking to see if the square to the left is equal to 0
           turnLeft();
       } else {
-          goStraight(12000);
+          goStraight(12000); // if no square straight, right, or left is equal to 0, go straight
       }
+      // if right and left are open
     } else if (optionR && optionL) {
-          if (maze[xpos+1][ypos] == 0) {
+          if (maze[xpos+1][ypos] == 0) { // check to see if the square to the right is equal to 0
             turnRight();
-          } else if (maze[xpos-1][ypos] == 0) {
+          } else if (maze[xpos-1][ypos] == 0) { // check to see if the square to the left is equal to 0
             turnLeft();
           } else {
-            turnRight();
+            turnRight(); // if neither right or left squares are 0, turn right
           }
       }
+     // if only right is open
      else if (optionR) {
         turnRight();
+
+      // if only left is open
     } else if (optionL) {
         turnLeft();
     }
   }
+    // the rest of the directions are the same as dir = 1, just incremented appropriately
     if (dir == 2) {
       
       if (FR > 950) {
@@ -688,15 +701,16 @@ void physicalSearch(void) {
             turnLeft();
       }
     }
-      
+    // if neither straight, right, or left is open, rudder will do a UE (josh, can you update this to work with your decision on when to oneeightyright and oneeightyleft, please)
     if (FR < 950 && SR < 950 && SL < 950) {
-      oneeightyRight();
+      oneeightyRight(); // i just have it as oneeightyRight for now
     }
 }
 void lookAhead(void) {
+  // for each direction, rudder checks to see if the square in front is in between 100 and 200, and then stops if it is
   if (dir == 1) {
     if ((maze[xpos][ypos+1] < 200) && (maze[xpos][ypos+1] > 100)) {
-      stop(764);
+      stop(764); // stop in one unit square
     }
   }
   if (dir == 2) {
