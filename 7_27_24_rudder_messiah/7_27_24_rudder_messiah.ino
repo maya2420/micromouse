@@ -27,6 +27,7 @@ void whereTo(); //finds what direction that block is in
 void turnToDirections(); //puts information into directions of brudder
 void go();
 void wallcheck(void);
+void printXY();
 
 //int maze[5][5]={0};
 int dir = 1,xpos = 0, ypos = 0, dis = 1; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
@@ -50,11 +51,14 @@ bool turnList[100]; //turns array
 int distList[100]; //distance array
 int directionsSize = 0; // size of directions list
 int moveCount = 18; //how many moves made
-int goalX = 1;
-int goalY = 2;
+int goalX = 2;
+int goalY = 1;
 int block = 1; //distance counter
 int countPos = 2;
 bool pathFound = false;
+
+int xp[20];
+int yp[20];
 
 
 int maze[5][5] = {0};
@@ -67,6 +71,8 @@ int matrix[5][5] = { {1,2,3,4,0},
 
 void setup() {
   // put your setup code here, to run once:
+  maze[0][0]=1;
+
   mystepperLeft.setMaxSpeed(cruise);
   mystepperLeft.setAcceleration(4000);
   mystepperLeft.setCurrentPosition(0);
@@ -90,7 +96,7 @@ void setup() {
 }
 
 
-
+int o = 0;
 
 void loop() {
   
@@ -100,25 +106,6 @@ void loop() {
   SL = analogRead(A3);
 
   physicalSearch();
-/*
- 
-
-    //movecount set to 13 rn
-  //if(goalX == xpos && goalY == ypos){
-    for (int x = 0; x < moveCount; x++) { // needs to be the movecount so whenever you give a block a single digit number make it movecount equal it
-      find(); //its set to matrix rn, change to maze if using maze
-      whereTo();
-   }  
-
-    for (int i = 0; i < valsSize; i++) {
-      turnToDirections();
-    }
-    pathFound = true;
-  //}
-
-  //if(xpos == 0 && ypos == 0 && pathFound){
-    go();
- // }*/
 
 if( xpos == goalX && ypos == goalY){
   for (int d = 0; d < 18; d++) { // needs to be the movecount so whenever you give a block a single digit number make it movecount equal it
@@ -126,16 +113,58 @@ if( xpos == goalX && ypos == goalY){
     whereTo();
   } 
  
-  for (int i = 0; i < 17; i++) {
+  for (int i = 0; i < 17; i++){
     turnToDirections();
   }
+  Serial.print(xpos);
+  Serial.print(ypos);
   goToStart();
-  go();
   }
+
+/*
+  if(pathFound){
+    go();
+  } */
+
+xp[o] = xpos;
+yp[o] = ypos;
+o++;
+  
+  printXY();
+ // printShit();
+
 
 }
 
+
 //-----------------------------------------------------
+void printShit(){
+  for(int i = 0; i<5; i++){
+      Serial.println(' ');
+
+      for(int j = 0; j<5; j++){
+        Serial.print(maze[i][j]);
+        Serial.print(' ');
+      }
+
+    }
+    Serial.println(' ');
+  }
+
+  void printXY(){
+    /*Serial.print(xpos);
+    Serial.print("_");
+    Serial.print(ypos);
+    Serial.println(' ');
+*/
+  for(int i = 0; i< o; i++){
+    Serial.print(xp[i]);
+    Serial.print("_");
+    Serial.print(yp[i]);
+    Serial.println(' ');
+  }
+
+  }
 
 void find(){
     for (int i = 0; i < 5; i++) {
@@ -220,6 +249,7 @@ void turnToDirections(){
 }
 
 void go(){
+  oneeightyRight();
   for(int i = 0; i<moveCount; i++){
     if(distList[i] != 0){
       goStraight(distList[i]);
@@ -232,24 +262,12 @@ void go(){
       }
     }
   }
-  while(true){
-    for(int i = 0; i<5; i++){
-      for(int j = 0; j<5; j++){
-          Serial.print(maze[i][j]);
-          Serial.print(' ');
-      }
-      Serial.println("     ");
-      if(i == 4){
-        Serial.print("-----------");
-        Serial.println(" ");
-      }
-    }
-  }
 }
+
 
 void goToStart(){
   oneeightyRight();
-  for(int i = moveCount; i>0; i--){
+  for(int i = 4; i>0; i--){
     if(distList[i] != 0){
       goStraight(distList[i]);
 
@@ -260,6 +278,12 @@ void goToStart(){
         turnLeft();
       }
     }
+  }
+  pathFound = true;
+  while(true){
+    goStraight(0);
+    Serial.print("im sad");
+
   }
 }
 
@@ -421,16 +445,16 @@ void stop(int stopIn) {
 void posup(void){
   if(mystepperLeft.currentPosition() >= checkspot){
     checkspot = checkspot + 764;
-    if(dir == 1){
+    if(dir == 2){
       ypos = ypos + 1;
     }
-    if(dir == 2){
+    if(dir == 1){
       xpos = xpos + 1;
     }
-    if(dir == 3){
+    if(dir == 4){
       ypos = ypos - 1;
     }
-    if(dir == 4){
+    if(dir == 3){
       xpos = xpos - 1;
     }
   }
@@ -470,28 +494,28 @@ void wallcheck(void){
   }
   if(FR > 950 && SR > 950){
     branch = 1;
+    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
     if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 2 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+    if(dir == 4 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
-      branch = 0;
-    }
   }
   if(FL > 950 && SL > 950){
     branch = 1;
-    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 1 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+    if(dir == 3 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 4 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
@@ -500,16 +524,16 @@ void wallcheck(void){
   }
   if(SR > 950 && SL > 950){
     branch = 1;
-    if(dir == 1 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 2 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
       branch = 0;
     }
-    if(dir == 3 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 4 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+    if(dir == 3 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
       branch = 0;
     }
   }
@@ -524,7 +548,7 @@ void physicalSearch(void) {
   goStraight(12000); // rudder goes straight until either a wall or lookAhead stops him
 
   // for each of the directions, rudder will decide if right, left, or straight are options
-  if (dir == 1) {
+  if (dir == 2) {
 
     if (FR > 950) { // making sure no wall is in front
 
@@ -579,7 +603,7 @@ void physicalSearch(void) {
     }
   }
     // the rest of the directions are the same as dir = 1, just incremented appropriately
-    if (dir == 2) {
+    else if (dir == 1) {
       
       if (FR > 950) {
         if (maze[xpos+1][ypos] < 200) {
@@ -626,7 +650,7 @@ void physicalSearch(void) {
       }
     }
 
-    if (dir == 3) {
+    else if (dir == 4) {
 
       if (FR > 950) {
         if (maze[xpos][ypos-1] < 200) {
@@ -673,7 +697,7 @@ void physicalSearch(void) {
           turnLeft();
       }
     }
-    if (dir == 4) {
+    else if (dir == 3) {
 
       if (FR > 950) {
         if (maze[xpos-1][ypos] < 200) {
@@ -727,22 +751,22 @@ void physicalSearch(void) {
 }
 void lookAhead(int stopVal) {
   // for each direction, rudder checks to see if the square in front is in between 100 and 200, and then stops if it is
-  if (dir == 1) {
+  if (dir == 2) {
     if ((maze[xpos][ypos+1] < 200) && (maze[xpos][ypos+1] > 100)) {
       stop(stopVal); // stop in 1 or half a unit square
     }
   }
-  if (dir == 2) {
+  if (dir == 1) {
     if ((maze[xpos+1][ypos] < 200) && (maze[xpos+1][ypos] > 100)) {
       stop(stopVal);
     }
   }
-  if (dir == 3) {
+  if (dir == 4) {
     if ((maze[xpos][ypos-1] < 200) && (maze[xpos][ypos-1] > 100)) {
       stop(stopVal);
     }
   }
-  if (dir == 4) {
+  if (dir == 3) {
     if ((maze[xpos-1][ypos] < 200) && (maze[xpos-1][ypos] > 100)) {
       stop(stopVal);
     }
