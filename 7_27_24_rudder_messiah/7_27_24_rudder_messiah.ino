@@ -241,6 +241,7 @@ void go(){
       Serial.println("     ");
       if(i == 4){
         Serial.print("-----------");
+        Serial.println(" ");
       }
     }
   }
