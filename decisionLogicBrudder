@@ -247,6 +247,18 @@ void go(){
       }
     }
   }
+  while(true){
+    for(int i = 0; i<5; i++){
+      for(int j = 0; j<5; j++){
+          Serial.print(maze[i][j]);
+          Serial.print(' ');
+      }
+      Serial.println("     ");
+      if(i == 4){
+        Serial.print("-----------");
+      }
+    }
+  }
 }
 
 //-----------------------------------------------
@@ -731,6 +743,21 @@ void lookAhead(int stopVal) {
   if (dir == 4) {
     if ((maze[xpos-1][ypos] < 200) && (maze[xpos-1][ypos] > 100)) {
       stop(stopVal);
+    }
+  }
+}
+void goToStart(){
+  oneeightyRight();
+  for(int i = moveCount; i>0; i--){
+    if(distList[i] != 0){
+      goStraight(distList[i]);
+
+      if(turnList[i] == false){
+        turnRight();
+      }
+      else if(turnList[i] == true){
+        turnLeft();
+      }
     }
   }
 }
