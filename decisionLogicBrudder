@@ -27,12 +27,17 @@ void whereTo(); //finds what direction that block is in
 void turnToDirections(); //puts information into directions of brudder
 void go();
 void wallcheck(void);
+void printXY();
+bool posup();
+bool lookAhead();
 
 //int maze[5][5]={0};
 int dir = 1,xpos = 0, ypos = 0, dis = 1; //direction the mouse is initially facing incrementing by one every 90 degrees clockwise and repeating after 4.
-int checkspot = 0; //initially set to zero to check starting position
+int checkspot = 764; //initially set to 764 to start at 0
 bool deadend;
 bool branch, searching = 1;
+bool lookAheadVar = false;
+bool posupVar = false;
 
 int cX = 0;
 int cY = 0;
@@ -51,20 +56,27 @@ int distList[100]; //distance array
 int directionsSize = 0; // size of directions list
 int moveCount = 18; //how many moves made
 int goalX = 0;
-int goalY = 0;
+int goalY = 1;
 int block = 1; //distance counter
 int countPos = 2;
 bool pathFound = false;
 
+int xp[20];
+int yp[20];
 
-int maze[5][5] = { {1,2,3,104,999},
-                     {0,0,0,105,0},
-                     {0,0,0,0,0},
-                     {0,0,0,0,0},
-                     {0,0,0,0,0} };
+
+int maze[5][5] = {0};
+
+int matrix[5][5] = { {1,2,3,4,0},
+                     {14,13,0,5,0},
+                     {15,12,0,6,0},
+                     {16,11,10,7,0},
+                     {17,18,9,8,0} };
 
 void setup() {
   // put your setup code here, to run once:
+  maze[0][0]=1;
+
   mystepperLeft.setMaxSpeed(cruise);
   mystepperLeft.setAcceleration(4000);
   mystepperLeft.setCurrentPosition(0);
@@ -88,62 +100,18 @@ void setup() {
 }
 
 
-
+int o = 0;
 
 void loop() {
   
-  SR = analogRead(A0);
-  FR = analogRead(A1);
-  FL = analogRead(A2);
-  SL = analogRead(A3);
+  //SR = analogRead(A0);
+  //FR = analogRead(A1);
+  //FL = analogRead(A2);
+  //SL = analogRead(A3);
 
   physicalSearch();
-/*
-  if (FR > 950 || FL > 950) {
-    //goStraight(); //are there two functions or does it need to be edited to goStraight(distance);
-  } else if (SR > 950) {
-    turnRight();
-  } else if (SL > 950) {
-    turnLeft();
-  } else if (FR < 950 && FL < 950 && SR < 950 && SL < 950) {
-    if (SR > SL) {
-      oneeightyRight();
-    }
-    if (SL > SR) {
-      oneeightyLeft();
-    }
-  }
-
-    //movecount set to 13 rn
-  //if(goalX == xpos && goalY == ypos){
-    for (int x = 0; x < moveCount; x++) { // needs to be the movecount so whenever you give a block a single digit number make it movecount equal it
-      find(); //its set to matrix rn, change to maze if using maze
-      whereTo();
-   }  
-
-    for (int i = 0; i < valsSize; i++) {
-      turnToDirections();
-    }
-    pathFound = true;
-  //}
-
-  //if(xpos == 0 && ypos == 0 && pathFound){
-    go();
- // }*/
-
- for (int d = 0; d < 18; d++) { // needs to be the movecount so whenever you give a block a single digit number make it movecount equal it
-    find();
-    whereTo();
-} 
- 
-for (int i = 0; i < 17; i++) {
-    turnToDirections();
-}
-go();
 
 }
-
-//-----------------------------------------------------
 
 void find(){
     for (int i = 0; i < 5; i++) {
@@ -228,14 +196,8 @@ void turnToDirections(){
 }
 
 void go(){
-  /*if(dir == 1 && vals[0] == 2){
-    turnRight();
-  }
-  if(dir == 1 && vals[0] == 3){
-    turnLeft();
-  }
-  */
-  for(int i = 0; i<moveCount; i++){
+  oneeightyRight();
+  for (int i = 0; i<directionsSize; i++){
     if(distList[i] != 0){
       goStraight(distList[i]);
 
@@ -247,17 +209,35 @@ void go(){
       }
     }
   }
-  while(true){
-    for(int i = 0; i<5; i++){
-      for(int j = 0; j<5; j++){
-          Serial.print(maze[i][j]);
-          Serial.print(' ');
+}
+
+
+void goToStart(){
+  //Serial.println("i'm no longer hungry");
+  if (SR > SL)
+   oneeightyRight();
+  else if (SL > SR) {
+    oneeightyLeft();
+  }
+  Serial.println(directionsSize);
+  for(int i = directionsSize; i>0; i--){
+    Serial.print(distList[i]);
+    if(distList[i] != 0){
+      goStraight(distList[i]);
+
+      if(turnList[i] == false){
+        turnRight();
       }
-      Serial.println("     ");
-      if(i == 4){
-        Serial.print("-----------");
+      else if(turnList[i] == true){
+        turnLeft();
       }
     }
+  } 
+  pathFound = true;
+  while (true){
+    //goStraight(0);
+    //Serial.print("im sad");
+
   }
 }
 
@@ -274,13 +254,13 @@ void turnLeft(void) {
 
   checkspot = 382;
 
-  mystepperRight.move(490);
+  mystepperRight.move(540);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     mystepperRight.run();
   }
 
-  lookAhead(382);
+  lookAhead(382,lookAheadVar);
 }
 void turnRight(void) {
 
@@ -294,12 +274,12 @@ void turnRight(void) {
 
   checkspot = 382;
 
-  mystepperLeft.move(490);
+  mystepperLeft.move(540);
 
   while (mystepperLeft.distanceToGo() > 0 || mystepperRight.distanceToGo() > 0) {
     mystepperLeft.run();
   }
-  lookAhead(382);
+  lookAhead(382, lookAheadVar);
   
 }
 void goStraight(int straightCount) {
@@ -320,17 +300,22 @@ void goStraight(int straightCount) {
     SL = analogRead(A3);
 
     unfuck();
-    posup();
 
     if ((FR < 950 || FL < 950) && searching  == 1) {
       stop(250);
       break;
     }
     // if in the searching phase, look ahead
-    if (searching == 1) {
-      lookAhead(764);
+ //   if (searching == 1) {
+  //  }
+    posup(posupVar);
+    if (posupVar == true) {
+      break;
     }
   }
+  //if (xpos == 1 && ypos == 1) {
+  //goToStart();
+ // }
 }
 void oneeightyRight(void) {
 
@@ -348,16 +333,16 @@ void oneeightyRight(void) {
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
 
-  mystepperLeft.moveTo(480);
-  mystepperRight.moveTo(-480);
+  mystepperLeft.moveTo(540);
+  mystepperRight.moveTo(-540);
 
 
   while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
     mystepperLeft.run();
     mystepperRight.run();
   }
-  //mystepperRight.setAcceleration(8000);
-  //mystepperLeft.setAcceleration(8000);
+
+  lookAhead(500,lookAheadVar);
 }
 void oneeightyLeft(void) {
 
@@ -375,16 +360,16 @@ void oneeightyLeft(void) {
   mystepperRight.setCurrentPosition(0);
   mystepperLeft.setCurrentPosition(0);
 
-  mystepperLeft.moveTo(-480);
-  mystepperRight.moveTo(480);
+  mystepperLeft.moveTo(-540);
+  mystepperRight.moveTo(540);
 
 
   while ((mystepperLeft.distanceToGo() > 0) || mystepperRight.distanceToGo() > 0) {
     mystepperLeft.run();
     mystepperRight.run();
   }
-  //mystepperRight.setAcceleration(4000);
-  //mystepperLeft.setAcceleration(4000);
+
+   lookAhead(500, lookAheadVar);
 }
 void unfuck(void) {
   if (millis() - lasttime > 1) {
@@ -410,86 +395,120 @@ void stop(int stopIn) {
     mystepperRight.run();
   }
   checkspot = 0;
-  posup();
+  posup(posupVar);
   cruiseL = cruise;
   cruiseR = cruise;
   mystepperLeft.setMaxSpeed(cruise);
   mystepperRight.setMaxSpeed(cruise);
 }
-void posup(void){
+
+bool posup(bool posupVar){
   if(mystepperLeft.currentPosition() >= checkspot){
     checkspot = checkspot + 764;
-    if(dir == 1){
+    if(dir == 2){
       ypos = ypos + 1;
     }
-    if(dir == 2){
+    if(dir == 1){
       xpos = xpos + 1;
     }
-    if(dir == 3){
+    if(dir == 4){
       ypos = ypos - 1;
     }
-    if(dir == 4){
+    if(dir == 3){
       xpos = xpos - 1;
     }
-  }
   wallcheck();
   mazeup();
+  lookAhead(500,lookAheadVar);
+  if (lookAheadVar == true) {
+    return posupVar = true;
+  } else {
+    return posupVar = false;
+  }
+  checkGoal();
+  }
+  else {
+    return posupVar = false;
+  }
 }
-void mazeup(void){
-  if(maze[xpos][ypos] == 0 && branch == 0 && deadend  == 0){
-      dis = dis + 1;
-      maze[xpos][ypos] = dis;
+
+void checkGoal(void) {
+
+  if( xpos == goalX && ypos == goalY){
+    //Serial.println(xpos);
+    //Serial.println(ypos);
+    for (int d = 0; d < 18; d++) { // needs to be the movecount so whenever you give a block a single digit number make it movecount equal it
+      find();
+      whereTo();
+    }  
+    for (int i = 0; i < 17; i++){
+    turnToDirections();
     }
-    if(deadend  == 1){
-      dis = dis + 1;
-      maze[xpos][ypos] = dis + 200;
-    }
-    if(maze[xpos][ypos] == 0 && branch == 1){
-      dis = dis + 1;
-      maze[xpos][ypos] = dis + 100;
-    }
-    if(maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100){
-      dis = maze[xpos][ypos];
-      maze[xpos][ypos] = maze[xpos][ypos] + 200;
-    }
-    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 0){
-      dis = maze[xpos][ypos] - 100;
-      maze[xpos][ypos] = maze[xpos][ypos] - 100;
-    }
-    if(maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 1){
-      dis = maze[xpos][ypos] - 100;
-    }
-    deadend = 0;
-    branch = 0;
+  goToStart();
+  }
+}
+
+void mazeup(void) {
+  if (maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100) {
+    dis = maze[xpos][ypos];
+    maze[xpos][ypos] = maze[xpos][ypos] + 200;
+  }
+  if (maze[xpos][ypos] == 0 && branch == 0 && deadend == 0) {
+    dis = dis + 1;
+    maze[xpos][ypos] = dis;
+  }
+  if (deadend == 1) {
+    dis = dis + 1;
+    maze[xpos][ypos] = dis + 200;
+  }
+  if (maze[xpos][ypos] == 0 && branch == 1) {
+    dis = dis + 1;
+    maze[xpos][ypos] = dis + 100;
+  }
+  if (maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 0) {
+    dis = maze[xpos][ypos] - 100;
+    maze[xpos][ypos] = maze[xpos][ypos] - 100;
+  }
+  if (maze[xpos][ypos] > 100 && maze[xpos][ypos] < 200 && branch == 1) {
+    dis = maze[xpos][ypos] - 100;
+  }
+  deadend = 0;
+  branch = 0;
 }
 void wallcheck(void){
+
+  SR = analogRead(A0);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
+
   if (FR < 950 && FL < 950 && SR < 950 && SL < 950){
     deadend = 1;
   }
   if(FR > 950 && SR > 950){
     branch = 1;
+    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+      branch = 0;
+    }
     if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 2 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+    if(dir == 4 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
-      branch = 0;
-    }
   }
   if(FL > 950 && SL > 950){
     branch = 1;
-    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 1 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos + 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 3 && (maze[xpos][ypos - 1] != 0 || maze[xpos + 1][ypos] != 0)){
+    if(dir == 3 && (maze[xpos][ypos + 1] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
     if(dir == 4 && (maze[xpos][ypos - 1] != 0 || maze[xpos - 1][ypos] != 0)){
@@ -498,16 +517,16 @@ void wallcheck(void){
   }
   if(SR > 950 && SL > 950){
     branch = 1;
-    if(dir == 1 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 2 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 2 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+    if(dir == 1 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
       branch = 0;
     }
-    if(dir == 3 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
+    if(dir == 4 && (maze[xpos + 1][ypos] != 0 || maze[xpos - 1][ypos] != 0)){
       branch = 0;
     }
-    if(dir == 4 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
+    if(dir == 3 && (maze[xpos][ypos + 1] != 0 || maze[xpos][ypos - 1] != 0)){
       branch = 0;
     }
   }
@@ -521,51 +540,75 @@ void physicalSearch(void) {
 
   goStraight(12000); // rudder goes straight until either a wall or lookAhead stops him
 
+  SR = analogRead(A0);
+  FR = analogRead(A1);
+  FL = analogRead(A2);
+  SL = analogRead(A3);
+
   // for each of the directions, rudder will decide if right, left, or straight are options
   if (dir == 1) {
 
     if (FR > 950) { // making sure no wall is in front
 
-      if (maze[xpos][ypos+1] < 200) { // when direction = 1, straight results in the y position increasing by 1
+      if (maze[xpos+1][ypos] < 200) { // when direction = 1, straight results in the y position increasing by 1
         optionS = true;
       }
     }
 
     if (SR > 950) { // making sure no wall is to the right
 
-      if (maze[xpos+1][ypos] < 200) { // when direction = 1, right results in the x position increasing by 1
+      if (maze[xpos][ypos+1] < 200) { // when direction = 1, right results in the x position increasing by 1
         optionR = true;
       }
     }
 
     if (SL > 950) { // making sure no wall is to the left
 
-      if (maze[xpos-1][ypos] < 200) { // when direction = 1, left results in the x position decreasing by 1
+      if (maze[xpos][ypos-1] < 200) { // when direction = 1, left results in the x position decreasing by 1
         optionL = true;
       }
       
     }
     // if all options are open, we will prioritize unknown spaces, then straight, then right, then left
     if (optionS && optionR && optionL) {
-      if (maze[xpos][ypos+1] == 0) { // most likely can delete bc optionS will never equal 0
+      if (maze[xpos+1][ypos] == 0) { // most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos+1][ypos] == 0) { // checking to see if the square to the right is equal to 0
+      else if (maze[xpos][ypos+1] == 0) { // checking to see if the square to the right is equal to 0
         turnRight();
-      } else if (maze[xpos-1][ypos] == 0) { // checking to see if the square to the left is equal to 0
+      } else if (maze[xpos][ypos-1] == 0) { // checking to see if the square to the left is equal to 0
           turnLeft();
       } else {
           goStraight(12000); // if no square straight, right, or left is equal to 0, go straight
       }
       // if right and left are open
-    } else if (optionR && optionL) {
-          if (maze[xpos+1][ypos] == 0) { // check to see if the square to the right is equal to 0
+    } else if (optionS && optionR) {
+        if (maze[xpos+1][ypos] == 0) { // most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      } else if (maze[xpos][ypos+1] == 0) { // checking to see if the square to the right is equal to 0
+        turnRight();
+      } else {
+        goStraight(12000);
+      }
+    } else if (optionS && optionL) {
+        if (maze[xpos+1][ypos] == 0) { // most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      }   else if (maze[xpos][ypos-1] == 0) { // checking to see if the square to the left is equal to 0
+          turnLeft();
+      } else {
+        goStraight(12000);
+      }
+    }
+        else if (optionR && optionL) {
+          if (maze[xpos][ypos+1] == 0) { // check to see if the square to the right is equal to 0
             turnRight();
-          } else if (maze[xpos-1][ypos] == 0) { // check to see if the square to the left is equal to 0
+          } else if (maze[xpos][ypos-1] == 0) { // check to see if the square to the left is equal to 0
             turnLeft();
           } else {
             turnRight(); // if neither right or left squares are 0, turn right
           }
+      } else if (optionS) {
+          goStraight(12000);
       }
      // if only right is open
      else if (optionR) {
@@ -577,42 +620,62 @@ void physicalSearch(void) {
     }
   }
     // the rest of the directions are the same as dir = 1, just incremented appropriately
-    if (dir == 2) {
+    else if (dir == 2) {
       
       if (FR > 950) {
-        if (maze[xpos+1][ypos] < 200) {
+        if (maze[xpos][ypos+1] < 200) {
           optionS = true;
         }
       }
 
       if (SR > 950) {
 
-        if (maze[xpos][ypos-1] < 200) {
+        if (maze[xpos-1][ypos] < 200) {
           optionR = true;
         }
      }
 
       if (SL > 950) {
 
-        if (maze[xpos][ypos+1] < 200) {
+        if (maze[xpos+1][ypos] < 200) {
           optionL = true;
         }
       }
     if (optionS && optionR && optionL) {
-      if (maze[xpos+1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos][ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos][ypos-1] == 0) {
+      else if (maze[xpos-1][ypos] == 0) {
         turnRight();
-      } else if (maze[xpos][ypos+1] == 0) {
+      } else if (maze[xpos+1][ypos] == 0) {
           turnLeft();
       } else {
           goStraight(12000);
       } 
-    } else if (optionR && optionL) {
-          if (maze[xpos][ypos-1] == 0) {
+    } else if (optionS && optionR) {
+        if (maze[xpos][ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      }  else if (maze[xpos-1][ypos] == 0) {
+        turnRight();
+      } else {
+        goStraight(12000);
+      }
+    } else if (optionS && optionL) {
+        if (maze[xpos][ypos+1] == 0) { //most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      }   else if (maze[xpos+1][ypos] == 0) {
+          turnLeft();
+      } else {
+        goStraight(12000);
+      }
+    } else if (optionS) {
+      goStraight(12000);
+    }
+    
+     else if (optionR && optionL) {
+          if (maze[xpos-1][ypos] == 0) {
             turnRight();
-          } else if (maze[xpos][ypos+1] == 0) {
+          } else if (maze[xpos+1][ypos] == 0) {
             turnLeft();
           } else {
             turnRight();
@@ -624,43 +687,63 @@ void physicalSearch(void) {
       }
     }
 
-    if (dir == 3) {
+    else if (dir == 3) {
 
       if (FR > 950) {
-        if (maze[xpos][ypos-1] < 200) {
+        if (maze[xpos-1][ypos] < 200) {
           optionS = true;
         }
     }
 
       if (SR > 950) {
 
-        if (maze[xpos-1][ypos] < 200) {
+        if (maze[xpos][ypos-1] < 200) {
           optionR = true;
         }
       }
 
       if (SL > 950) {
 
-        if (maze[xpos+1][ypos] < 200) {
+        if (maze[xpos][ypos+1] < 200) {
           optionL = true;
         }
       
       }
     if (optionS && optionR && optionL) {
-      if (maze[xpos][ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
+      if (maze[xpos-1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
         goStraight(12000);
       }
-      else if (maze[xpos-1][ypos] == 0) {
+      else if (maze[xpos][ypos-1] == 0) {
         turnRight();
-      } else if (maze[xpos+1][ypos] == 0) {
+      } else if (maze[xpos][ypos+1] == 0) {
           turnLeft();
       } else {
           goStraight(12000);
       }
-    } else if (optionR && optionL) {
-        if (maze[xpos-1][ypos] == 0) {
+    } else if (optionS && optionR) {
+        if (maze[xpos-1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      } else if (maze[xpos][ypos-1] == 0) {
+        turnRight();
+      } else {
+        goStraight(12000);
+      }
+    } else if (optionS && optionL) {
+        if (maze[xpos-1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
+        goStraight(12000);
+      }   else if (maze[xpos][ypos+1] == 0) {
+          turnLeft();
+      } else {
+        goStraight(12000);
+      }
+    } else if (optionS) {
+      goStraight(12000);
+    }
+    
+    else if (optionR && optionL) {
+        if (maze[xpos][ypos-1] == 0) {
           turnRight();
-        } else if (maze[xpos+1][ypos] == 0) {
+        } else if (maze[xpos][ypos+1] == 0) {
           turnLeft();
         } else {
           turnRight();
@@ -671,43 +754,63 @@ void physicalSearch(void) {
           turnLeft();
       }
     }
-    if (dir == 4) {
+    else if (dir == 4) {
 
       if (FR > 950) {
-        if (maze[xpos-1][ypos] < 200) {
+        if (maze[xpos][ypos-1] < 200) {
           optionS = true;
         }
     }
 
       if (SR > 950) {
 
-        if (maze[xpos][ypos+1] < 200) {
+        if (maze[xpos+1][ypos] < 200) {
           optionR = true;
         }
       }
 
       if (SL > 950) {
 
-        if (maze[xpos][ypos-1] < 200) {
+        if (maze[xpos-1][ypos] < 200) {
           optionL = true;
         }
       
       }
       if (optionS && optionR && optionL) {
-        if (maze[xpos-1][ypos] == 0) { //most likely can delete bc optionS will never equal 0
+        if (maze[xpos][ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
           goStraight(12000);
         }
-        else if (maze[xpos][ypos+1] == 0) {
+        else if (maze[xpos+1][ypos] == 0) {
           turnRight();
-        } else if (maze[xpos][ypos-1] == 0) {
+        } else if (maze[xpos-1][ypos] == 0) {
             turnLeft();
         } else {
             goStraight(12000);
         } 
-      } else if (optionR && optionL) {
-          if (maze[xpos][ypos+1] == 0) {
+      } else if (optionS && optionR) {
+          if (maze[xpos][ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
+          goStraight(12000);
+        } else if (maze[xpos+1][ypos] == 0) {
+          turnRight();
+        } else {
+          goStraight(12000);
+        }
+      } else if (optionS && optionL) {
+          if (maze[xpos][ypos-1] == 0) { //most likely can delete bc optionS will never equal 0
+          goStraight(12000);
+        }   else if (maze[xpos-1][ypos] == 0) {
+            turnLeft();
+        } else {
+          goStraight(12000);
+        }
+      } else if (optionS) {
+        goStraight(12000);
+      }
+      
+      else if (optionR && optionL) {
+          if (maze[xpos+1][ypos] == 0) {
             turnRight();
-          } else if (maze[xpos][ypos-1] == 0) {
+          } else if (maze[xpos-1][ypos] == 0) {
             turnLeft();
           } else {
             turnRight();
@@ -720,44 +823,62 @@ void physicalSearch(void) {
     }
     // if neither straight, right, or left is open, rudder will do a UE (josh, can you update this to work with your decision on when to oneeightyright and oneeightyleft, please)
     if (FR < 950 && SR < 950 && SL < 950) {
-      oneeightyRight(); // i just have it as oneeightyRight for now
+      if (SR>SL) {
+        oneeightyRight();
+      } else {
+        oneeightyLeft();
+      }
     }
 }
-void lookAhead(int stopVal) {
+
+bool lookAhead(int stopVal, bool lookAheadVar) {
   // for each direction, rudder checks to see if the square in front is in between 100 and 200, and then stops if it is
   if (dir == 1) {
-    if ((maze[xpos][ypos+1] < 200) && (maze[xpos][ypos+1] > 100)) {
-      stop(stopVal); // stop in 1 or half a unit square
-    }
-  }
-  if (dir == 2) {
     if ((maze[xpos+1][ypos] < 200) && (maze[xpos+1][ypos] > 100)) {
+      stop(stopVal); // stop in 1 or half a unit square
+      return lookAheadVar = true;
+    } else if (maze[xpos+2][ypos] > 200) {
       stop(stopVal);
+      return lookAheadVar =true;
+    } else {
+      return lookAheadVar = false;
     }
   }
-  if (dir == 3) {
-    if ((maze[xpos][ypos-1] < 200) && (maze[xpos][ypos-1] > 100)) {
+  else if (dir == 2) {
+    if ((maze[xpos][ypos+1] < 200) && (maze[xpos][ypos+1] > 100)) {
       stop(stopVal);
+      return lookAheadVar =true;
+    } else if (maze[xpos][ypos+2] > 200) {
+      stop(stopVal);
+      return lookAheadVar = true;
+    } else {
+      return lookAheadVar = false;
     }
   }
-  if (dir == 4) {
+  else if (dir == 3) {
     if ((maze[xpos-1][ypos] < 200) && (maze[xpos-1][ypos] > 100)) {
       stop(stopVal);
+      return lookAheadVar = true;
+    } else if (maze[xpos-2][ypos] > 200) {
+      stop(stopVal);
+      return lookAheadVar = true;
+    } else {
+      return lookAheadVar = false;
     }
   }
+  else if (dir == 4) {
+    if ((maze[xpos][ypos-1] < 200) && (maze[xpos][ypos-1] > 100)) {
+      stop(stopVal);
+      return lookAheadVar = true;
+    } else if (maze[xpos][ypos-2] > 200) {
+      stop(stopVal);
+      return lookAheadVar = true;
+    } else {
+      return lookAheadVar = false;
+    }
+  }
+else {
+  return lookAheadVar = false;
 }
-void goToStart(){
-  oneeightyRight();
-  for(int i = moveCount; i>0; i--){
-    if(distList[i] != 0){
-      goStraight(distList[i]);
 
-      if(turnList[i] == false){
-        turnRight();
-      }
-      else if(turnList[i] == true){
-        turnLeft();
-      }
-    }
-  }
 }
