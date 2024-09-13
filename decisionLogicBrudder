@@ -43,6 +43,7 @@ bool goalHasBeenReached = false;
 bool optionS = false;
 bool optionR = false;
 bool optionL = false;
+bool posupCount = false;
 
 int cX = 0;
 int cY = 0;
@@ -56,8 +57,8 @@ int c = 0;               // current
 int f = 1;               //future
 int x = 0;               //incrementing
 int CountW = 0;          //counts in the where function
-bool turnList[5];        //turns array
-int distList[5];         //distance array
+bool turnList[10];        //turns array
+int distList[10];         //distance array
 int directionsSize = 0;  // size of directions list
 int moveCount = 18;      //how many moves made
 int goalX = 0;
@@ -326,10 +327,15 @@ void goStraight(int straightCount) {  //bookmark
 
     unfuck();
         if (searching) {
+            posupVar = false;
+            posupCount = false;
+            lookAheadVar = false;
           posup(posupVar);
 
           if (posupVar == true) {
-            posupVar = false;
+            //posupVar = false;
+            //posupCount = false;
+            //lookAheadVar = false;
             break;
           } 
         }
@@ -444,7 +450,7 @@ bool posup(bool posupVar) {
     }
     if (xpos == goalX && ypos == goalY) {
       goalHasBeenReached = true;
-      goalReached = true;
+      goalReached = true; //dont think i need goalreached
       if (bestRunDis == 0) {
         bestRunDis = dis + 1;
       }
@@ -458,11 +464,10 @@ bool posup(bool posupVar) {
     wallcheck();
     mazeup();
     checkGoal();
-    if (lookAheadVar == false) {
+    if (posupCount == false) {
     lookAhead(500, lookAheadVar);
     }
-    if (lookAheadVar == true || posupVar == true) {
-      lookAheadVar = false;
+    if (lookAheadVar == true) {
       return posupVar = true;
     } else {
       return posupVar = false;
@@ -496,7 +501,7 @@ void checkGoal(void) {
 }
 
 void mazeup(void) {
-  if (maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100 && !goalReached) {
+  if (maze[xpos][ypos] != 0 && maze[xpos][ypos] < 100 && !goalReached) { // don't think  i need goalreached anymore
     dis = maze[xpos][ypos];
     maze[xpos][ypos] = maze[xpos][ypos] + 200;
   }
@@ -892,10 +897,12 @@ bool lookAhead(int stopVal, bool lookAheadVar) {
   // for each direction, rudder checks to see if the square in front is in between 100 and 200, and then stops if it is
   if (dir == 1) {
     if ((maze[xpos + 1][ypos] < 200) && (maze[xpos + 1][ypos] > 100)) {
+      posupCount = true;
       stop(stopVal);  // stop in 1 or half a unit square
       return lookAheadVar = true;
-    } else if ((xpos + 2) >= 0 && (xpos + 2) < lengthMaze) {
+    } else if ((xpos + 2) >= 0 && (xpos + 2) < lengthMaze) { //dont think we need lengthmaze
       if (maze[xpos + 2][ypos] > 200) {
+        posupCount = true;
         stop(stopVal);
         return lookAheadVar = true;
       } else {
@@ -907,10 +914,12 @@ bool lookAhead(int stopVal, bool lookAheadVar) {
   }
   if (dir == 2) {
     if ((maze[xpos][ypos + 1] < 200) && (maze[xpos][ypos + 1] > 100)) {
+      posupCount = true;
       stop(stopVal);  // stop in 1 or half a unit square
       return lookAheadVar = true;
     } else if ((ypos + 2) >= 0 && (ypos + 2) < lengthMaze) {
       if (maze[xpos][ypos + 2] > 200) {
+        posupCount = true;
         stop(stopVal);
         return lookAheadVar = true;
       } else {
@@ -922,10 +931,12 @@ bool lookAhead(int stopVal, bool lookAheadVar) {
   }
   if (dir == 3) {
     if ((maze[xpos - 1][ypos] < 200) && (maze[xpos - 1][ypos] > 100)) {
+      posupCount = true;
       stop(stopVal);  // stop in 1 or half a unit square
       return lookAheadVar = true;
     } else if ((xpos - 2) >= 0 && (xpos - 2) < lengthMaze) {
       if (maze[xpos - 2][ypos] > 200) {
+        posupCount = true;
         stop(stopVal);
         return lookAheadVar = true;
       } else {
@@ -937,10 +948,12 @@ bool lookAhead(int stopVal, bool lookAheadVar) {
   }
   if (dir == 4) {
     if ((maze[xpos][ypos - 1] < 200) && (maze[xpos][ypos - 1] > 100)) {
+      posupCount = true;
       stop(stopVal);  // stop in 1 or half a unit square
       return lookAheadVar = true;
     } else if ((ypos - 2) >= 0 && (ypos - 2) < lengthMaze) {
       if (maze[xpos][ypos - 2] > 200) {
+        posupCount = true;
         stop(stopVal);
         return lookAheadVar = true;
       } else {
